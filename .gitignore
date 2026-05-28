@@ -65,3 +65,13 @@ ios/Runner/GeneratedPluginRegistrant.*
 !**/ios/**/default.mode2v3
 !**/ios/**/default.pbxuser
 !**/ios/**/default.perspectivev3
+
+# Node.js API backend
+api/node_modules/
+api/.env
+api/uploads/
+
+# Next.js Admin portal
+juris_honoris_admin/node_modules/
+juris_honoris_admin/.next/
+juris_honoris_admin/.env.local
