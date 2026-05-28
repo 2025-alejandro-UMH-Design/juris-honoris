@@ -2,14 +2,18 @@ const router = require('express').Router();
 const db     = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
-const SYSTEM_PROMPT = `Eres Juris, un asistente legal especializado en el sistema jurídico de Honduras.
-Tu función es orientar e informar a las personas sobre trámites legales, procesos judiciales,
-derechos y obligaciones bajo la legislación hondureña.
-Responde siempre en español claro y accesible. Sé preciso pero evita tecnicismos innecesarios.
-Al final de CADA respuesta incluye obligatoriamente una de estas dos líneas:
-- Si el caso requiere representación legal: [NECESITA_ABOGADO: SI]
-- Si el usuario puede gestionarlo solo: [NECESITA_ABOGADO: NO]
+// Prompt de respaldo si no hay uno configurado en la DB
+const DEFAULT_PROMPT = `Eres Juris, el asistente legal oficial de Juris Honoris, especializado en el sistema jurídico de Honduras.
+Responde siempre en español claro. Al final de CADA respuesta incluye:
+[NECESITA_ABOGADO: SI] o [NECESITA_ABOGADO: NO] según corresponda.
 IMPORTANTE: No proporcionas representación legal, solo orientación informativa.`;
+
+async function getSystemPrompt() {
+  const { rows } = await db.query(
+    "select value from system_config where key = 'ai_master_prompt'"
+  );
+  return rows[0]?.value || DEFAULT_PROMPT;
+}
 
 // GET /api/ai-chat/status  — verifica si la IA está configurada
 router.get('/status', requireAuth, async (req, res) => {
@@ -24,9 +28,10 @@ router.post('/message', requireAuth, async (req, res) => {
   const { message, history = [] } = req.body;
   if (!message?.trim()) return res.status(400).json({ error: 'message requerido' });
 
-  const cfg = await db.query(
-    "select key, value from system_config where key in ('ai_active_provider','ai_api_key','ai_model')"
-  );
+  const [cfg, systemPrompt] = await Promise.all([
+    db.query("select key, value from system_config where key in ('ai_active_provider','ai_api_key','ai_model')"),
+    getSystemPrompt(),
+  ]);
   const map = Object.fromEntries(cfg.rows.map(r => [r.key, r.value]));
 
   if (!map['ai_api_key']) {
@@ -38,7 +43,7 @@ router.post('/message', requireAuth, async (req, res) => {
   const model    = map['ai_model'] || defaultModel(provider);
 
   const messages = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: systemPrompt },
     ...history.slice(-10),
     { role: 'user', content: message.trim() },
   ];

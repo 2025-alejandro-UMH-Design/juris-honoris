@@ -153,7 +153,7 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(AppSizes.cardRadius),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryBlue.withOpacity(0.3),
+                  color: AppColors.primaryBlue.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
@@ -681,7 +681,7 @@ class _RecentActivityItem extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _categoryColor(task.category).withOpacity(0.1),
+                color: _categoryColor(task.category).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,

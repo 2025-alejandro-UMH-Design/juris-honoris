@@ -21,18 +21,20 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
   final ScrollController _scrollController = ScrollController();
 
   final List<_ChatMsg> _messages = [
-    _ChatMsg(
-      text: 'Hola, soy su abogado asignado. He revisado su caso y estoy listo para ayudarle. ¿Podría contarme más detalles sobre su situación?',
+    const _ChatMsg(
+      text:
+          'Hola, soy su abogado asignado. He revisado su caso y estoy listo para ayudarle. ¿Podría contarme más detalles sobre su situación?',
       isUser: false,
       time: '09:00',
     ),
-    _ChatMsg(
+    const _ChatMsg(
       text: 'Muchas gracias por atenderme. Mi situación es la siguiente...',
       isUser: true,
       time: '09:02',
     ),
-    _ChatMsg(
-      text: 'Entiendo. Para proceder necesitaré que me envíe los siguientes documentos: acta de matrimonio, DUI vigente y comprobante de domicilio.',
+    const _ChatMsg(
+      text:
+          'Entiendo. Para proceder necesitaré que me envíe los siguientes documentos: acta de matrimonio, DUI vigente y comprobante de domicilio.',
       isUser: false,
       time: '09:05',
     ),
@@ -140,11 +142,11 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
             width: double.infinity,
             color: const Color(0xFFE3F2FD),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.lock_outline, size: 14, color: Color(0xFF0D5BA8)),
-                const SizedBox(width: 6),
-                const Expanded(
+                Icon(Icons.lock_outline, size: 14, color: Color(0xFF0D5BA8)),
+                SizedBox(width: 6),
+                Expanded(
                   child: Text(
                     'Conversación confidencial y protegida',
                     style: TextStyle(
@@ -181,7 +183,8 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
                   icon: const Icon(Icons.attach_file, color: Color(0xFF757575)),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Adjuntar archivos — próximamente')),
+                      const SnackBar(
+                          content: Text('Adjuntar archivos — próximamente')),
                     );
                   },
                 ),
@@ -215,7 +218,8 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
                       color: Color(0xFF0D5BA8),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.send, color: Colors.white, size: 20),
+                    child:
+                        const Icon(Icons.send, color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -246,7 +250,7 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -267,7 +271,7 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
               msg.time,
               style: TextStyle(
                 color: msg.isUser
-                    ? Colors.white.withOpacity(0.7)
+                    ? Colors.white.withValues(alpha: 0.7)
                     : const Color(0xFF999999),
                 fontSize: 11,
               ),
@@ -287,8 +291,8 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
           SizedBox(
             width: 100,
             child: Text(label,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 14)),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ),
           Expanded(
             child: Text(value, style: const TextStyle(fontSize: 14)),
@@ -303,5 +307,6 @@ class _ChatMsg {
   final String text;
   final bool isUser;
   final String time;
-  const _ChatMsg({required this.text, required this.isUser, required this.time});
+  const _ChatMsg(
+      {required this.text, required this.isUser, required this.time});
 }

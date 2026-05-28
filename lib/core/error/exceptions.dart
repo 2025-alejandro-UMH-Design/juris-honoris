@@ -1,5 +1,6 @@
 /// Excepción lanzada por la capa de datos (repositorios / fuentes remotas).
 /// Se convierte a [Failure] en la capa de dominio.
+library;
 
 /// Error HTTP o de parseo de respuesta del servidor.
 class ServerException implements Exception {

@@ -75,6 +75,17 @@ abstract class Routes {
   static const lawyerProfileEdit = '/lawyer/profile';
 }
 
+/// Navegación del bottom nav bar usando GoRouter.
+/// Usado en todas las páginas que son rutas directas (tasks, dossier, chat-ia).
+void goNavBottom(BuildContext context, int index) {
+  switch (index) {
+    case 0: context.go('/home');
+    case 1: context.go('/chat-ia');
+    case 2: context.go('/tasks');
+    case 3: context.go('/dossier');
+  }
+}
+
 // ── Router factory ─────────────────────────────────────────────────────────
 GoRouter createRouter(AuthCubit authCubit) {
   return GoRouter(
@@ -118,7 +129,10 @@ GoRouter createRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: Routes.dossier,
-        builder: (context, state) => DossierPage(onNavChanged: (_) {}),
+        builder: (context, state) => DossierPage(
+          currentNavIndex: 3,
+          onNavChanged: (i) => goNavBottom(context, i),
+        ),
       ),
       GoRoute(
         path: Routes.chatIa,
@@ -167,7 +181,10 @@ GoRouter createRouter(AuthCubit authCubit) {
       // ── Tasks ────────────────────────────────────────────────────────────
       GoRoute(
         path: Routes.tasks,
-        builder: (context, state) => TasksPage(onNavChanged: (_) {}),
+        builder: (context, state) => TasksPage(
+          currentNavIndex: 2,
+          onNavChanged: (i) => goNavBottom(context, i),
+        ),
       ),
       GoRoute(
         path: Routes.createTask,
@@ -187,7 +204,9 @@ GoRouter createRouter(AuthCubit authCubit) {
       // ── Profile ──────────────────────────────────────────────────────────
       GoRoute(
         path: Routes.profile,
-        builder: (context, state) => ProfilePage(onNavChanged: (_) {}),
+        builder: (context, state) => ProfilePage(
+          onNavChanged: (i) => goNavBottom(context, i),
+        ),
       ),
       GoRoute(
         path: Routes.upgrade,

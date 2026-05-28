@@ -85,12 +85,14 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                     label: 'Estado',
                     value: _statusBadge(_currentStatus),
                   ),
-                  const Divider(height: AppSizes.xl, color: AppColors.borderColor),
+                  const Divider(
+                      height: AppSizes.xl, color: AppColors.borderColor),
                   _InfoRow(
                     label: 'Prioridad',
                     value: _priorityBadge(widget.task.priority),
                   ),
-                  const Divider(height: AppSizes.xl, color: AppColors.borderColor),
+                  const Divider(
+                      height: AppSizes.xl, color: AppColors.borderColor),
                   _InfoRow(
                     label: 'Categoría',
                     value: Text(
@@ -102,7 +104,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                       ),
                     ),
                   ),
-                  const Divider(height: AppSizes.xl, color: AppColors.borderColor),
+                  const Divider(
+                      height: AppSizes.xl, color: AppColors.borderColor),
                   _InfoRow(
                     label: 'Vencimiento',
                     value: Row(
@@ -155,7 +158,8 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                   return CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
                     value: sub.done,
-                    onChanged: (v) => setState(() => _subtasks[i].done = v ?? false),
+                    onChanged: (v) =>
+                        setState(() => _subtasks[i].done = v ?? false),
                     title: Text(
                       sub.title,
                       style: TextStyle(
@@ -177,10 +181,10 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             const SizedBox(height: AppSizes.lg),
 
             // Documentos requeridos
-            _SectionCard(
+            const _SectionCard(
               title: 'Documentos requeridos',
               child: Column(
-                children: const [
+                children: [
                   _DocItem(name: 'DNI o Pasaporte'),
                   _DocItem(name: 'Partida de nacimiento'),
                   _DocItem(name: 'Constancia de domicilio'),
@@ -275,8 +279,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
         const BadgeWidget(label: 'Completado', variant: BadgeVariant.success),
       'in_progress' =>
         const BadgeWidget(label: 'En progreso', variant: BadgeVariant.info),
-      _ =>
-        const BadgeWidget(label: 'Pendiente', variant: BadgeVariant.gray),
+      _ => const BadgeWidget(label: 'Pendiente', variant: BadgeVariant.gray),
     };
   }
 
@@ -399,4 +402,3 @@ class _Subtask {
 
   _Subtask({required this.title, required this.done});
 }
-

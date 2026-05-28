@@ -61,15 +61,16 @@ class _VerifyIdentityPageState extends State<VerifyIdentityPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryBlue.withOpacity(0.08),
+                color: AppColors.primaryBlue.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.primaryBlue.withOpacity(0.2)),
+                border: Border.all(
+                    color: AppColors.primaryBlue.withValues(alpha: 0.2)),
               ),
-              child: Row(
+              child: const Row(
                 children: [
-                  const Icon(Icons.shield_outlined, color: AppColors.primaryBlue),
-                  const SizedBox(width: 12),
-                  const Expanded(
+                  Icon(Icons.shield_outlined, color: AppColors.primaryBlue),
+                  SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -125,7 +126,8 @@ class _VerifyIdentityPageState extends State<VerifyIdentityPage> {
                   const SizedBox(height: 8),
                   const Text(
                     'Tus datos están protegidos y solo serán compartidos con el abogado asignado.',
-                    style: TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
+                    style:
+                        TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
                   ),
                   const SizedBox(height: 28),
                   AppButton(

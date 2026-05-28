@@ -27,15 +27,46 @@ router.get('/stats', ...guard, async (req, res) => {
 // GET /api/admin/users  — lista todos los usuarios
 router.get('/users', ...guard, async (req, res) => {
   const { role, search } = req.query;
-  let sql = 'select id, email, full_name, phone, role, plan, is_verified, solicitations_this_month, created_at from users where 1=1';
+  let sql = `select id, email, full_name, phone, dni,
+                    role, plan, is_verified,
+                    solicitations_this_month, created_at, updated_at
+             from users where 1=1`;
   const params = [];
 
-  if (role) { params.push(role); sql += ` and role = $${params.length}`; }
+  if (role)   { params.push(role);       sql += ` and role = $${params.length}`; }
   if (search) { params.push(`%${search}%`); sql += ` and (lower(full_name) like lower($${params.length}) or lower(email) like lower($${params.length}))`; }
   sql += ' order by created_at desc';
 
   const { rows } = await db.query(sql, params);
   res.json(rows);
+});
+
+// GET /api/admin/users/:id  — detalle completo de un usuario
+router.get('/users/:id', ...guard, async (req, res) => {
+  const { rows } = await db.query(
+    `select id, email, full_name, phone, dni,
+            role, plan, is_verified,
+            solicitations_this_month, created_at, updated_at
+     from users where id = $1`,
+    [req.params.id]
+  );
+  if (!rows[0]) return res.status(404).json({ error: 'Usuario no encontrado' });
+  res.json(rows[0]);
+});
+
+// PUT /api/admin/users/:id/reset-password  — resetear contraseña
+router.put('/users/:id/reset-password', ...guard, async (req, res) => {
+  const { new_password } = req.body;
+  if (!new_password || new_password.length < 6) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+  }
+  const hash = await bcrypt.hash(new_password, 10);
+  const { rowCount } = await db.query(
+    'update users set password_hash = $1, updated_at = now() where id = $2',
+    [hash, req.params.id]
+  );
+  if (!rowCount) return res.status(404).json({ error: 'Usuario no encontrado' });
+  res.json({ message: 'Contraseña actualizada correctamente' });
 });
 
 // PUT /api/admin/users/:id/plan  — cambiar plan

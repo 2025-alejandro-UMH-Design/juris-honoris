@@ -16,14 +16,15 @@ router.get('/', ...guard, async (req, res) => {
   const map = Object.fromEntries(rows.map(r => [r.key, r.value]));
   res.json({
     active_provider: map['ai_active_provider'] || 'groq',
-    api_key:         map['ai_api_key'] ? '••••••••' : '',   // nunca exponer la clave real
+    api_key:         map['ai_api_key'] ? '••••••••' : '',
     model:           map['ai_model'] || '',
+    master_prompt:   map['ai_master_prompt'] || '',
   });
 });
 
 // PUT /api/admin/ai-config
 router.put('/', ...guard, async (req, res) => {
-  const { active_provider, api_key, model } = req.body;
+  const { active_provider, api_key, model, master_prompt } = req.body;
   if (!active_provider) return res.status(400).json({ error: 'active_provider requerido' });
 
   const upsert = (key, value) => db.query(
@@ -34,8 +35,8 @@ router.put('/', ...guard, async (req, res) => {
 
   await upsert('ai_active_provider', active_provider);
   if (model) await upsert('ai_model', model);
-  // Solo actualiza la clave si no es el placeholder
   if (api_key && api_key !== '••••••••') await upsert('ai_api_key', api_key);
+  if (master_prompt !== undefined) await upsert('ai_master_prompt', master_prompt);
 
   res.json({ message: 'Configuración guardada' });
 });

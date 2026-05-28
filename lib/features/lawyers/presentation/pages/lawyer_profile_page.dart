@@ -56,7 +56,7 @@ class LawyerProfilePage extends StatelessWidget {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: AppColors.white.withOpacity(0.2),
+                          color: AppColors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                           border: Border.all(color: AppColors.white, width: 2),
                         ),
@@ -82,15 +82,15 @@ class LawyerProfilePage extends StatelessWidget {
                       ),
                       if (lawyer.verified) ...[
                         const SizedBox(height: 4),
-                        Row(
+                        const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.verified_rounded,
                               size: 16,
                               color: AppColors.successGreen,
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               'Verificado',
                               style: TextStyle(
@@ -108,7 +108,6 @@ class LawyerProfilePage extends StatelessWidget {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(AppSizes.pagePadding),
@@ -193,11 +192,11 @@ class LawyerProfilePage extends StatelessWidget {
                   const SizedBox(height: AppSizes.lg),
 
                   // Tarifas
-                  _Section(
+                  const _Section(
                     title: 'Tarifas',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         _TarifaRow(
                           icon: Icons.chat_bubble_outline_rounded,
                           label: 'Consulta inicial',
@@ -246,8 +245,7 @@ class LawyerProfilePage extends StatelessWidget {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content:
-                              Text('Función de mensajería próximamente'),
+                          content: Text('Función de mensajería próximamente'),
                           duration: Duration(seconds: 2),
                         ),
                       );
