@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/badge_widget.dart';
@@ -30,7 +31,7 @@ class _HomePageState extends State<HomePage> {
   void _onTabChanged(int index) {
     switch (index) {
       case 1:
-        Navigator.of(context).pushNamed('/chat-ia');
+        context.go('/chat-ia');
       case 2:
         Navigator.push(
           context,
@@ -182,8 +183,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: AppSizes.md),
                       GestureDetector(
-                        onTap: () =>
-                            Navigator.of(context).pushNamed('/chat-ia'),
+                        onTap: () => context.go('/chat-ia'),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSizes.lg,

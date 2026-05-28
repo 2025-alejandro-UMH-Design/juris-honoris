@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:device_preview/device_preview.dart';
 
 import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/router/app_router.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
-import 'package:juris_honoris/features/auth/presentation/bloc/auth_state.dart';
 import 'package:juris_honoris/core/constants/app_colors.dart';
 
 class JurisHonorisApp extends StatefulWidget {
@@ -25,6 +25,10 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
     super.initState();
     _authCubit = sl<AuthCubit>();
     _router = createRouter(_authCubit);
+    // Delay para que el árbol de widgets esté listo antes de navegar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _authCubit.tryRestoreSession();
+    });
   }
 
   @override
@@ -39,17 +43,22 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
       value: _authCubit,
       child: BlocListener<AuthCubit, AuthState>(
         listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            _router.go('/home');
-          } else if (state is AuthUnauthenticated) {
-            _router.go('/login');
-          }
+          // addPostFrameCallback evita colisión con el redirect de GoRouter
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (state is AuthAuthenticated) {
+              _router.go('/home');
+            } else if (state is AuthUnauthenticated) {
+              _router.go('/login');
+            }
+          });
         },
         child: MaterialApp.router(
           title: 'Juris Honoris',
           debugShowCheckedModeBanner: false,
           theme: _buildTheme(),
           routerConfig: _router,
+          locale: DevicePreview.locale(context),
+          builder: DevicePreview.appBuilder,
         ),
       ),
     );
@@ -64,7 +73,6 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
         secondary: AppColors.secondaryOrange,
         error: AppColors.errorRed,
         surface: AppColors.white,
-        background: AppColors.backgroundColor,
       ),
       scaffoldBackgroundColor: AppColors.backgroundColor,
       appBarTheme: const AppBarTheme(
@@ -96,7 +104,8 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: AppColors.borderColor),
@@ -116,10 +125,10 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
         hintStyle: const TextStyle(color: AppColors.placeholder),
         labelStyle: const TextStyle(color: AppColors.greyMedium),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.white,
         elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.1),
+        shadowColor: Colors.black.withValues(alpha: 0.1),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
           side: const BorderSide(color: AppColors.borderColor),
@@ -137,7 +146,7 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.greyVeryLight,
-        selectedColor: AppColors.primaryBlue.withOpacity(0.15),
+        selectedColor: AppColors.primaryBlue.withValues(alpha: 0.15),
         labelStyle: const TextStyle(fontSize: 13),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -148,17 +157,29 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
     return base.copyWith(
       textTheme: GoogleFonts.robotoTextTheme(base.textTheme).copyWith(
         headlineLarge: GoogleFonts.roboto(
-          fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.greyDark),
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: AppColors.greyDark),
         headlineMedium: GoogleFonts.roboto(
-          fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.greyDark),
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColors.greyDark),
         headlineSmall: GoogleFonts.roboto(
-          fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.greyDark),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.greyDark),
         bodyLarge: GoogleFonts.roboto(
-          fontSize: 16, fontWeight: FontWeight.normal, color: AppColors.subtitleGrey),
+            fontSize: 16,
+            fontWeight: FontWeight.normal,
+            color: AppColors.subtitleGrey),
         bodyMedium: GoogleFonts.roboto(
-          fontSize: 14, fontWeight: FontWeight.normal, color: AppColors.greyMedium),
+            fontSize: 14,
+            fontWeight: FontWeight.normal,
+            color: AppColors.greyMedium),
         labelSmall: GoogleFonts.roboto(
-          fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.subtitleGrey),
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: AppColors.subtitleGrey),
       ),
     );
   }

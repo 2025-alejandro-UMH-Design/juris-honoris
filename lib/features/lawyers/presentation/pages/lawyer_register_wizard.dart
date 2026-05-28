@@ -218,8 +218,7 @@ class _LawyerRegisterWizardState extends State<LawyerRegisterWizard> {
                 ? 'No ingresada'
                 : 'L. ${_tarifaController.text}',
             acceptedTerms: _acceptedTerms,
-            onTermsChanged: (v) =>
-                setState(() => _acceptedTerms = v ?? false),
+            onTermsChanged: (v) => setState(() => _acceptedTerms = v ?? false),
             onSubmit: _acceptedTerms ? _submit : null,
           ),
         ],
@@ -316,8 +315,7 @@ class _StepScaffold extends StatelessWidget {
     required this.subtitle,
     required this.children,
     required this.onNext,
-    this.nextLabel = 'Siguiente',
-  });
+  }) : nextLabel = 'Siguiente';
 
   @override
   Widget build(BuildContext context) {
@@ -338,8 +336,7 @@ class _StepScaffold extends StatelessWidget {
           const SizedBox(height: AppSizes.xs),
           Text(
             subtitle,
-            style: const TextStyle(
-                fontSize: 14, color: AppColors.subtitleGrey),
+            style: const TextStyle(fontSize: 14, color: AppColors.subtitleGrey),
           ),
           const SizedBox(height: AppSizes.xl),
           ...children,
@@ -386,13 +383,11 @@ class _StepPersonalData extends StatelessWidget {
       subtitle: 'Información básica de tu cuenta',
       onNext: onNext,
       children: [
-        _FieldLabel('Nombre completo'),
+        const _FieldLabel('Nombre completo'),
         const SizedBox(height: AppSizes.xs),
-        _Field(
-            controller: nombreController,
-            hint: 'Ej. Carlos Mendoza López'),
+        _Field(controller: nombreController, hint: 'Ej. Carlos Mendoza López'),
         const SizedBox(height: AppSizes.md),
-        _FieldLabel('Correo electrónico'),
+        const _FieldLabel('Correo electrónico'),
         const SizedBox(height: AppSizes.xs),
         _Field(
           controller: emailController,
@@ -401,7 +396,7 @@ class _StepPersonalData extends StatelessWidget {
           prefixIcon: Icons.email_outlined,
         ),
         const SizedBox(height: AppSizes.md),
-        _FieldLabel('Contraseña'),
+        const _FieldLabel('Contraseña'),
         const SizedBox(height: AppSizes.xs),
         _Field(
           controller: passwordController,
@@ -420,7 +415,7 @@ class _StepPersonalData extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSizes.md),
-        _FieldLabel('Confirmar contraseña'),
+        const _FieldLabel('Confirmar contraseña'),
         const SizedBox(height: AppSizes.xs),
         _Field(
           controller: confirmPasswordController,
@@ -439,7 +434,7 @@ class _StepPersonalData extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSizes.md),
-        _FieldLabel('Teléfono'),
+        const _FieldLabel('Teléfono'),
         const SizedBox(height: AppSizes.xs),
         _Field(
           controller: telefonoController,
@@ -480,21 +475,21 @@ class _StepProfessionalData extends StatelessWidget {
       subtitle: 'Información de tu ejercicio legal',
       onNext: onNext,
       children: [
-        _FieldLabel('DNI / Identidad'),
+        const _FieldLabel('DNI / Identidad'),
         const SizedBox(height: AppSizes.xs),
         _Field(
             controller: dniController,
             hint: '0000-0000-00000',
             prefixIcon: Icons.badge_outlined),
         const SizedBox(height: AppSizes.md),
-        _FieldLabel('Número de colegiación'),
+        const _FieldLabel('Número de colegiación'),
         const SizedBox(height: AppSizes.xs),
         _Field(
             controller: colegiacionController,
             hint: 'CAH-0000',
             prefixIcon: Icons.workspace_premium_outlined),
         const SizedBox(height: AppSizes.md),
-        _FieldLabel('Años de experiencia'),
+        const _FieldLabel('Años de experiencia'),
         const SizedBox(height: AppSizes.xs),
         _Field(
           controller: experienciaController,
@@ -539,11 +534,9 @@ class _StepProfessionalData extends StatelessWidget {
                 child: Text(
                   s,
                   style: TextStyle(
-                    color:
-                        selected ? AppColors.white : AppColors.greyDark,
+                    color: selected ? AppColors.white : AppColors.greyDark,
                     fontSize: 13,
-                    fontWeight:
-                        selected ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -590,8 +583,7 @@ class _StepDocuments extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.primaryBlue.withOpacity(0.05),
             borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-            border:
-                Border.all(color: AppColors.primaryBlue.withOpacity(0.2)),
+            border: Border.all(color: AppColors.primaryBlue.withOpacity(0.2)),
           ),
           child: Row(
             children: const [
@@ -600,8 +592,8 @@ class _StepDocuments extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Tus documentos serán revisados en 24-48 horas hábiles.',
-                  style: TextStyle(
-                      fontSize: 12, color: AppColors.primaryBlueDark),
+                  style:
+                      TextStyle(fontSize: 12, color: AppColors.primaryBlueDark),
                 ),
               ),
             ],
@@ -645,8 +637,8 @@ class _DocumentUploadCardState extends State<_DocumentUploadCard> {
                   color: AppColors.primaryBlue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(widget.icon,
-                    color: AppColors.primaryBlue, size: 20),
+                child:
+                    Icon(widget.icon, color: AppColors.primaryBlue, size: 20),
               ),
               const SizedBox(width: AppSizes.sm),
               Expanded(
@@ -726,8 +718,8 @@ class _StepWorkZone extends StatelessWidget {
 
   InputDecoration _dropdownDecoration() {
     return InputDecoration(
-      prefixIcon: const Icon(Icons.location_on_outlined,
-          color: AppColors.greyMedium),
+      prefixIcon:
+          const Icon(Icons.location_on_outlined, color: AppColors.greyMedium),
       filled: true,
       fillColor: AppColors.white,
       contentPadding: const EdgeInsets.symmetric(
@@ -742,8 +734,7 @@ class _StepWorkZone extends StatelessWidget {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.inputRadius),
-        borderSide:
-            const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
       ),
     );
   }
@@ -885,8 +876,7 @@ class _StepRates extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.primaryBlue.withOpacity(0.06),
             borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-            border:
-                Border.all(color: AppColors.primaryBlue.withOpacity(0.2)),
+            border: Border.all(color: AppColors.primaryBlue.withOpacity(0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -941,8 +931,8 @@ class _StepRates extends StatelessWidget {
             prefixText: 'L. ',
             prefixStyle: const TextStyle(
                 color: AppColors.greyDark, fontWeight: FontWeight.w600),
-            prefixIcon: const Icon(Icons.attach_money,
-                color: AppColors.greyMedium),
+            prefixIcon:
+                const Icon(Icons.attach_money, color: AppColors.greyMedium),
             filled: true,
             fillColor: AppColors.white,
             contentPadding: const EdgeInsets.symmetric(
@@ -957,8 +947,8 @@ class _StepRates extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSizes.inputRadius),
-              borderSide: const BorderSide(
-                  color: AppColors.primaryBlue, width: 1.5),
+              borderSide:
+                  const BorderSide(color: AppColors.primaryBlue, width: 1.5),
             ),
           ),
         ),
@@ -1076,8 +1066,7 @@ class _StepConfirmation extends StatelessWidget {
                 const Expanded(
                   child: Text(
                     'Acepto los términos y condiciones de Juris Honoris',
-                    style:
-                        TextStyle(fontSize: 13, color: AppColors.greyDark),
+                    style: TextStyle(fontSize: 13, color: AppColors.greyDark),
                   ),
                 ),
               ],
@@ -1093,8 +1082,8 @@ class _StepConfirmation extends StatelessWidget {
           Center(
             child: Text(
               'Tu solicitud será revisada en 24-48 horas hábiles',
-              style: const TextStyle(
-                  fontSize: 12, color: AppColors.subtitleGrey),
+              style:
+                  const TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
               textAlign: TextAlign.center,
             ),
           ),
@@ -1250,8 +1239,7 @@ class _Field extends StatelessWidget {
       style: const TextStyle(fontSize: 14, color: AppColors.greyDark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            const TextStyle(color: AppColors.hintGrey, fontSize: 14),
+        hintStyle: const TextStyle(color: AppColors.hintGrey, fontSize: 14),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: AppColors.greyMedium, size: 20)
             : null,

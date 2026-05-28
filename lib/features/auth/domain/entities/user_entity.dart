@@ -29,6 +29,29 @@ class UserEntity extends Equatable {
     required this.createdAt,
   });
 
+  factory UserEntity.fromJson(Map<String, dynamic> json) {
+    return UserEntity(
+      id:                      json['id'] as String,
+      email:                   json['email'] as String,
+      name:                    json['full_name'] as String?,
+      phone:                   json['phone'] as String?,
+      dni:                     json['dni'] as String?,
+      role:                    _roleFromString(json['role'] as String? ?? 'client'),
+      plan:                    (json['plan'] as String?) == 'premium' ? UserPlan.premium : UserPlan.free,
+      isVerified:              json['is_verified'] as bool? ?? false,
+      solicitationsThisMonth:  json['solicitations_this_month'] as int? ?? 0,
+      createdAt:               DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
+
+  static UserRole _roleFromString(String role) {
+    switch (role) {
+      case 'admin':  return UserRole.admin;
+      case 'lawyer': return UserRole.lawyer;
+      default:       return UserRole.client;
+    }
+  }
+
   UserEntity copyWith({
     String? id,
     String? email,

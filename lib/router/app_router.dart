@@ -4,9 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
-import 'package:juris_honoris/features/auth/presentation/bloc/auth_state.dart';
+import 'package:juris_honoris/features/home/presentation/widgets/lawyer_card.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.dart';
-import 'package:juris_honoris/features/admin/presentation/bloc/admin_cubit.dart';
 
 // Auth
 import 'package:juris_honoris/features/auth/presentation/pages/splash_page.dart';
@@ -39,12 +38,6 @@ import 'package:juris_honoris/features/profile/presentation/pages/verify_identit
 // Chat client-lawyer
 import 'package:juris_honoris/features/chat/client_lawyer_chat_page.dart';
 
-// Admin
-import 'package:juris_honoris/features/admin/presentation/pages/admin_pin_page.dart';
-import 'package:juris_honoris/features/admin/presentation/pages/admin_dashboard_page.dart';
-import 'package:juris_honoris/features/admin/presentation/pages/ai_providers_page.dart';
-import 'package:juris_honoris/features/admin/presentation/pages/lawyers_verification_page.dart';
-
 // Lawyer (lawyer view)
 import 'package:juris_honoris/features/lawyers/presentation/pages/lawyer_login_page.dart';
 import 'package:juris_honoris/features/lawyers/presentation/pages/lawyer_register_wizard.dart';
@@ -73,10 +66,6 @@ abstract class Routes {
   static const upgrade = '/profile/upgrade';
   static const verifyIdentity = '/profile/verify';
   static const clientChat = '/chat/:lawyerId';
-  static const admin = '/admin';
-  static const adminDashboard = '/admin/dashboard';
-  static const adminAiProviders = '/admin/ai-providers';
-  static const adminLawyers = '/admin/lawyers';
   static const lawyerLogin = '/lawyer/login';
   static const lawyerRegister = '/lawyer/register';
   static const lawyerDashboard = '/lawyer/dashboard';
@@ -96,7 +85,6 @@ GoRouter createRouter(AuthCubit authCubit) {
       final isLoggingIn = state.matchedLocation == Routes.login ||
           state.matchedLocation == Routes.register ||
           state.matchedLocation == Routes.splash ||
-          state.matchedLocation == Routes.admin ||
           state.matchedLocation.startsWith('/lawyer/login') ||
           state.matchedLocation.startsWith('/lawyer/register');
 
@@ -130,7 +118,7 @@ GoRouter createRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: Routes.dossier,
-        builder: (context, state) => const DossierPage(),
+        builder: (context, state) => DossierPage(onNavChanged: (_) {}),
       ),
       GoRoute(
         path: Routes.chatIa,
@@ -158,29 +146,28 @@ GoRouter createRouter(AuthCubit authCubit) {
       GoRoute(
         path: '/lawyers/:id',
         builder: (context, state) {
-          final lawyerId = state.pathParameters['id'] ?? '';
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          return LawyerProfilePage(
-            lawyerId: lawyerId,
-            lawyerData: extra,
-          );
+          final id = state.pathParameters['id'] ?? '';
+          final lawyer = (state.extra as LawyerData?) ??
+              mockLawyers.firstWhere((l) => l.id == id,
+                  orElse: () => mockLawyers.first);
+          return LawyerProfilePage(lawyer: lawyer);
         },
       ),
       GoRoute(
         path: '/lawyers/:id/request',
         builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>? ?? {};
-          return LawyerRequestPage(
-            lawyerId: state.pathParameters['id'] ?? '',
-            lawyerName: extra['name'] as String? ?? 'Abogado',
-          );
+          final id = state.pathParameters['id'] ?? '';
+          final lawyer = (state.extra as LawyerData?) ??
+              mockLawyers.firstWhere((l) => l.id == id,
+                  orElse: () => mockLawyers.first);
+          return LawyerRequestPage(lawyer: lawyer);
         },
       ),
 
       // ── Tasks ────────────────────────────────────────────────────────────
       GoRoute(
         path: Routes.tasks,
-        builder: (context, state) => const TasksPage(),
+        builder: (context, state) => TasksPage(onNavChanged: (_) {}),
       ),
       GoRoute(
         path: Routes.createTask,
@@ -189,15 +176,18 @@ GoRouter createRouter(AuthCubit authCubit) {
       GoRoute(
         path: '/tasks/:id',
         builder: (context, state) {
-          final taskId = state.pathParameters['id'] ?? '';
-          return TaskDetailPage(taskId: taskId);
+          final id = state.pathParameters['id'] ?? '';
+          final task = (state.extra as TaskData?) ??
+              mockTasks.firstWhere((t) => t.id == id,
+                  orElse: () => mockTasks.first);
+          return TaskDetailPage(task: task);
         },
       ),
 
       // ── Profile ──────────────────────────────────────────────────────────
       GoRoute(
         path: Routes.profile,
-        builder: (context, state) => const ProfilePage(),
+        builder: (context, state) => ProfilePage(onNavChanged: (_) {}),
       ),
       GoRoute(
         path: Routes.upgrade,
@@ -224,30 +214,6 @@ GoRouter createRouter(AuthCubit authCubit) {
             caseType: extra['caseType'] as String? ?? 'Caso legal',
           );
         },
-      ),
-
-      // ── Admin ────────────────────────────────────────────────────────────
-      GoRoute(
-        path: Routes.admin,
-        builder: (context, state) => const AdminPinPage(),
-      ),
-      GoRoute(
-        path: Routes.adminDashboard,
-        builder: (context, state) => BlocProvider.value(
-          value: sl<AdminCubit>(),
-          child: const AdminDashboardPage(),
-        ),
-      ),
-      GoRoute(
-        path: Routes.adminAiProviders,
-        builder: (context, state) => BlocProvider.value(
-          value: sl<AdminCubit>(),
-          child: const AIProvidersPage(),
-        ),
-      ),
-      GoRoute(
-        path: Routes.adminLawyers,
-        builder: (context, state) => const LawyersVerificationPage(),
       ),
 
       // ── Lawyer module ────────────────────────────────────────────────────

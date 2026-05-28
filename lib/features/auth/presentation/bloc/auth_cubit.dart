@@ -1,111 +1,96 @@
+import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uuid/uuid.dart';
 
+import 'package:juris_honoris/core/constants/api_config.dart';
+import 'package:juris_honoris/core/services/token_storage.dart';
 import 'package:juris_honoris/features/auth/domain/entities/user_entity.dart';
 
 part 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
+  final Dio _dio;
+  final TokenStorage _tokenStorage;
+
   UserEntity? _currentUser;
 
-  static const _uuid = Uuid();
-
-  AuthCubit() : super(const AuthInitial());
+  AuthCubit({required Dio dio, required TokenStorage tokenStorage})
+      : _dio = dio,
+        _tokenStorage = tokenStorage,
+        super(const AuthInitial());
 
   UserEntity? get currentUser => _currentUser;
-
-  bool get isAdmin => _currentUser?.role == UserRole.admin;
-
+  bool get isAdmin  => _currentUser?.role == UserRole.admin;
   bool get isLawyer => _currentUser?.role == UserRole.lawyer;
 
-  /// Simula login por email/contraseña.
-  /// Reglas demo:
-  ///   email contiene 'admin'   → role=admin
-  ///   email contiene 'abogado' → role=lawyer
-  ///   cualquier otro           → role=client
+  /// Intenta restaurar sesión desde el token guardado.
+  Future<void> tryRestoreSession() async {
+    final token = _tokenStorage.token;
+    if (token == null) {
+      emit(const AuthUnauthenticated());
+      return;
+    }
+    try {
+      final res = await _dio.get('${ApiConfig.auth}/me');
+      final user = UserEntity.fromJson(res.data as Map<String, dynamic>);
+      _currentUser = user;
+      emit(AuthAuthenticated(user));
+    } catch (_) {
+      await _tokenStorage.clear();
+      emit(const AuthUnauthenticated());
+    }
+  }
+
   Future<void> loginWithEmail(String email, String password) async {
     emit(const AuthLoading());
-    await Future.delayed(const Duration(milliseconds: 1200));
-
     try {
-      final role = _roleFromEmail(email);
-      final user = _buildMockUser(email: email, role: role);
-      _currentUser = user;
-      emit(AuthAuthenticated(user));
-    } catch (e) {
-      emit(AuthError('Error al iniciar sesión: $e'));
-    }
-  }
-
-  /// Demo: crea usuario client con Google.
-  Future<void> loginWithGoogle() async {
-    emit(const AuthLoading());
-    await Future.delayed(const Duration(milliseconds: 1000));
-
-    try {
-      const email = 'usuario.google@gmail.com';
-      final user = _buildMockUser(
-        email: email,
-        role: UserRole.client,
-        name: 'Usuario Google',
+      final res = await _dio.post(
+        '${ApiConfig.auth}/login',
+        data: {'email': email.trim(), 'password': password},
       );
+      final token = res.data['token'] as String;
+      await _tokenStorage.save(token);
+
+      final user = UserEntity.fromJson(res.data['user'] as Map<String, dynamic>);
       _currentUser = user;
       emit(AuthAuthenticated(user));
+    } on DioException catch (e) {
+      final msg = e.response?.data?['error'] ?? 'Credenciales incorrectas';
+      emit(AuthError(msg.toString()));
     } catch (e) {
-      emit(AuthError('Error al iniciar sesión con Google: $e'));
+      emit(AuthError('Error al iniciar sesión'));
     }
   }
 
-  /// Demo: crea usuario con rol según isLawyer.
   Future<void> register({
     required String email,
     required String password,
-    required bool isLawyer,
+    required String fullName,
+    String? phone,
   }) async {
     emit(const AuthLoading());
-    await Future.delayed(const Duration(milliseconds: 1200));
-
     try {
-      final role = isLawyer ? UserRole.lawyer : UserRole.client;
-      final user = _buildMockUser(email: email, role: role);
+      final res = await _dio.post(
+        '${ApiConfig.auth}/register',
+        data: {'email': email.trim(), 'password': password, 'full_name': fullName, 'phone': phone},
+      );
+      final token = res.data['token'] as String;
+      await _tokenStorage.save(token);
+
+      final user = UserEntity.fromJson(res.data['user'] as Map<String, dynamic>);
       _currentUser = user;
       emit(AuthAuthenticated(user));
+    } on DioException catch (e) {
+      final msg = e.response?.data?['error'] ?? 'Error al crear cuenta';
+      emit(AuthError(msg.toString()));
     } catch (e) {
-      emit(AuthError('Error al crear cuenta: $e'));
+      emit(AuthError('Error al crear cuenta'));
     }
   }
 
   Future<void> logout() async {
+    await _tokenStorage.clear();
     _currentUser = null;
     emit(const AuthUnauthenticated());
-  }
-
-  // ------------------------------------------------------------------ //
-  //  Helpers privados
-  // ------------------------------------------------------------------ //
-
-  UserRole _roleFromEmail(String email) {
-    final lower = email.toLowerCase();
-    if (lower.contains('admin')) return UserRole.admin;
-    if (lower.contains('abogado')) return UserRole.lawyer;
-    return UserRole.client;
-  }
-
-  UserEntity _buildMockUser({
-    required String email,
-    required UserRole role,
-    String? name,
-  }) {
-    return UserEntity(
-      id: _uuid.v4(),
-      email: email,
-      name: name ?? email.split('@').first,
-      role: role,
-      plan: UserPlan.free,
-      isVerified: true,
-      solicitationsThisMonth: 0,
-      createdAt: DateTime.now(),
-    );
   }
 }

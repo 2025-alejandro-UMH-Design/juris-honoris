@@ -16,7 +16,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _nameController    = TextEditingController();
+  final _emailController   = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -27,6 +28,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -45,9 +47,9 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
     context.read<AuthCubit>().register(
-          email: _emailController.text.trim(),
+          email:    _emailController.text.trim(),
           password: _passwordController.text,
-          isLawyer: _isLawyer,
+          fullName: _nameController.text.trim(),
         );
   }
 
@@ -116,8 +118,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: AppSizes.sm),
                     _RoleSelector(
                       isLawyer: _isLawyer,
-                      onChanged: (value) =>
-                          setState(() => _isLawyer = value),
+                      onChanged: (value) => setState(() => _isLawyer = value),
                     ),
                     const SizedBox(height: AppSizes.xl),
 
@@ -126,6 +127,21 @@ class _RegisterPageState extends State<RegisterPage> {
                       _LawyerInfoBanner(),
                       const SizedBox(height: AppSizes.lg),
                     ],
+
+                    // ── Full name ─────────────────────────────────────
+                    TextFormField(
+                      controller: _nameController,
+                      keyboardType: TextInputType.name,
+                      textInputAction: TextInputAction.next,
+                      enabled: !isLoading,
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa tu nombre completo.' : null,
+                      decoration: _inputDecoration(
+                        label: 'Nombre completo',
+                        hint: 'Juan Pérez',
+                        icon: Icons.person_outline,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.md),
 
                     // ── Email ─────────────────────────────────────────
                     TextFormField(
@@ -417,8 +433,7 @@ class _RoleChip extends StatelessWidget {
               label,
               style: TextStyle(
                 color: isSelected ? AppColors.white : AppColors.greyDark,
-                fontWeight:
-                    isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 14,
               ),
             ),
@@ -435,10 +450,10 @@ class _LawyerInfoBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
-        color: AppColors.primaryBlue.withOpacity(0.08),
+        color: AppColors.primaryBlue.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
         border: Border.all(
-          color: AppColors.primaryBlue.withOpacity(0.3),
+          color: AppColors.primaryBlue.withValues(alpha: 0.3),
         ),
       ),
       child: Row(

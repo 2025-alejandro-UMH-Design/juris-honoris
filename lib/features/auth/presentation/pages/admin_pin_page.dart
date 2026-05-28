@@ -82,7 +82,7 @@ class _AdminPinPageState extends State<AdminPinPage> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBlueDark.withOpacity(0.1),
+                    color: AppColors.primaryBlueDark.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -210,8 +210,7 @@ class _Keypad extends StatelessWidget {
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.greyDark,
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppSizes.buttonRadius),
+                    borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
                   ),
                 ),
                 child: Text(

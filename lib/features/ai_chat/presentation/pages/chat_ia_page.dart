@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
@@ -8,6 +9,7 @@ import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.d
 import 'package:juris_honoris/features/ai_chat/presentation/widgets/action_buttons_bar.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/widgets/ai_message_bubble.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:juris_honoris/shared/widgets/bottom_nav_bar.dart';
 
 import 'ai_result_page.dart';
 
@@ -33,9 +35,9 @@ class _ChatIAPageState extends State<ChatIAPage> {
   @override
   void initState() {
     super.initState();
-    // Recargar config al abrir la pantalla
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ChatIACubit>().reloadConfiguration();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<ChatIACubit>().reloadConfiguration();
+      if (mounted) setState(() {});
     });
   }
 
@@ -97,10 +99,23 @@ class _ChatIAPageState extends State<ChatIAPage> {
     });
   }
 
+  void _onNavChanged(int index) {
+    switch (index) {
+      case 0: context.go('/home');
+      case 2: context.go('/tasks');
+      case 3: context.go('/dossier');
+      default: break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.greyVeryLight,
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: 1,
+        onTabChanged: _onNavChanged,
+      ),
       appBar: AppBar(
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: AppColors.white,
@@ -111,10 +126,11 @@ class _ChatIAPageState extends State<ChatIAPage> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: AppColors.white.withOpacity(0.2),
+                color: AppColors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.balance, color: AppColors.white, size: 18),
+              child:
+                  const Icon(Icons.balance, color: AppColors.white, size: 18),
             ),
             const SizedBox(width: AppSizes.sm),
             const Text(
@@ -200,8 +216,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
                   padding: const EdgeInsets.symmetric(
                     vertical: AppSizes.md,
                   ),
-                  itemCount:
-                      allMessages.length + (showSuggestions ? 1 : 0),
+                  itemCount: allMessages.length + (showSuggestions ? 1 : 0),
                   itemBuilder: (context, index) {
                     // Suggestions row at the bottom of the initial state
                     if (showSuggestions && index == allMessages.length) {
@@ -215,9 +230,8 @@ class _ChatIAPageState extends State<ChatIAPage> {
                     final isLast = index == allMessages.length - 1;
                     return AIMessageBubble(
                       message: msg,
-                      needsLawyer: isLast && !msg.isUser
-                          ? lastNeedsLawyer
-                          : null,
+                      needsLawyer:
+                          isLast && !msg.isUser ? lastNeedsLawyer : null,
                     );
                   },
                 ),
@@ -229,17 +243,13 @@ class _ChatIAPageState extends State<ChatIAPage> {
                   needsLawyer: lastNeedsLawyer,
                   onPrimaryAction: () => _navigateToResult(
                     context,
-                    needsLawyer: lastNeedsLawyer,
-                    summary: messages.isNotEmpty
-                        ? messages.last.content
-                        : '',
+                    needsLawyer: lastNeedsLawyer!,
+                    summary: messages.isNotEmpty ? messages.last.content : '',
                   ),
                   onSecondaryAction: () => _navigateToResult(
                     context,
-                    needsLawyer: lastNeedsLawyer,
-                    summary: messages.isNotEmpty
-                        ? messages.last.content
-                        : '',
+                    needsLawyer: lastNeedsLawyer!,
+                    summary: messages.isNotEmpty ? messages.last.content : '',
                   ),
                 ),
 
@@ -321,7 +331,7 @@ class _NotConfiguredView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: () {
                 // Navegar al panel admin — el router lo gestiona
-                Navigator.of(context).pushNamed('/admin');
+                context.go('/admin');
               },
               icon: const Icon(Icons.admin_panel_settings_outlined),
               label: const Text('Ir al panel admin'),
@@ -329,8 +339,7 @@ class _NotConfiguredView extends StatelessWidget {
                 backgroundColor: AppColors.primaryBlue,
                 foregroundColor: AppColors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSizes.buttonRadius),
+                  borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
                 ),
               ),
             ),
@@ -385,7 +394,7 @@ class _SuggestionsRow extends StatelessWidget {
                     border: Border.all(color: AppColors.borderColor),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.greyDark.withOpacity(0.04),
+                        color: AppColors.greyDark.withValues(alpha: 0.04),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -435,7 +444,7 @@ class _InputBar extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.greyDark.withOpacity(0.05),
+            color: AppColors.greyDark.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -524,9 +533,7 @@ class _SendButton extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: isTyping
-            ? AppColors.greyLight
-            : AppColors.primaryBlue,
+        color: isTyping ? AppColors.greyLight : AppColors.primaryBlue,
         shape: BoxShape.circle,
       ),
       child: Material(
@@ -555,4 +562,3 @@ class _SendButton extends StatelessWidget {
     );
   }
 }
-

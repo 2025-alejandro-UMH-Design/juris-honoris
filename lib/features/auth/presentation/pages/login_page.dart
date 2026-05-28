@@ -9,7 +9,6 @@ import 'package:juris_honoris/shared/widgets/app_button.dart';
 
 import 'register_page.dart';
 import 'forgot_password_page.dart';
-import 'admin_pin_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -37,10 +36,6 @@ class _LoginPageState extends State<LoginPage> {
           _emailController.text.trim(),
           _passwordController.text,
         );
-  }
-
-  void _loginWithGoogle() {
-    context.read<AuthCubit>().loginWithGoogle();
   }
 
   @override
@@ -166,19 +161,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: AppSizes.xl),
 
-                    // ── Divider ───────────────────────────────────────
-                    _OrDivider(),
-                    const SizedBox(height: AppSizes.xl),
-
-                    // ── Google Button ─────────────────────────────────
-                    AppButton(
-                      label: 'Continuar con Google',
-                      variant: ButtonVariant.secondary,
-                      icon: Icons.g_mobiledata_rounded,
-                      onPressed: isLoading ? null : _loginWithGoogle,
-                      isLoading: false,
-                    ),
-                    const SizedBox(height: AppSizes.xl2),
+                    const SizedBox(height: AppSizes.md),
 
                     // ── Links ─────────────────────────────────────────
                     TextButton(
@@ -225,27 +208,6 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    const SizedBox(height: AppSizes.xl3),
-                    const Divider(color: AppColors.borderColor),
-                    const SizedBox(height: AppSizes.sm),
-
-                    // ── Admin access ──────────────────────────────────
-                    TextButton(
-                      onPressed: isLoading
-                          ? null
-                          : () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const AdminPinPage(),
-                                ),
-                              ),
-                      child: const Text(
-                        'Acceso Admin',
-                        style: TextStyle(
-                          color: AppColors.greyMedium,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -297,23 +259,3 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-class _OrDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(child: Divider(color: AppColors.borderColor)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-          child: Text(
-            'o continúa con',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.greyMedium,
-                ),
-          ),
-        ),
-        const Expanded(child: Divider(color: AppColors.borderColor)),
-      ],
-    );
-  }
-}
