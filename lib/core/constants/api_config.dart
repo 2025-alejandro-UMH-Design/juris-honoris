@@ -1,20 +1,21 @@
 class ApiConfig {
   ApiConfig._();
 
-  // URL base inyectada al compilar con --dart-define=API_BASE_URL=https://tu-servidor.up.railway.app/api
-  // Si no se pasa el define, usa la IP del emulador de Android Studio por defecto.
+  // URL base inyectada al compilar con --dart-define=API_BASE_URL=...
+  // Si no se pasa el define, usa el servidor de producción en Railway.
   //
-  // Para producción (APK):
-  //   flutter build apk --dart-define=API_BASE_URL=https://juris-honoris-api.up.railway.app/api
+  // Para producción (APK para distribuir):
+  //   flutter build apk
+  //   (usa la URL de Railway por defecto — no necesita nada extra)
   //
-  // Para desarrollo en emulador Android:
+  // Para desarrollo en emulador Android (apunta al backend local):
   //   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
   //
-  // Para dispositivo físico (misma red):
+  // Para dispositivo físico (misma red Wi-Fi):
   //   flutter run --dart-define=API_BASE_URL=http://192.168.1.94:3000/api
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:3000/api',
+    defaultValue: 'https://backend-production-192ce.up.railway.app/api',
   );
 
   // Endpoints
