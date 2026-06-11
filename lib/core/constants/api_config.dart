@@ -1,30 +1,30 @@
 class ApiConfig {
   ApiConfig._();
 
-  // ── Cambiar según el entorno ───────────────────────────────
+  // URL base inyectada al compilar con --dart-define=API_BASE_URL=https://tu-servidor.up.railway.app/api
+  // Si no se pasa el define, usa la IP del emulador de Android Studio por defecto.
   //
-  // Flutter web (DevicePreview en Chrome):
-  //   static const _host = 'localhost';
+  // Para producción (APK):
+  //   flutter build apk --dart-define=API_BASE_URL=https://juris-honoris-api.up.railway.app/api
   //
-  // Android emulator:
-  //   static const _host = '10.0.2.2';
+  // Para desarrollo en emulador Android:
+  //   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api
   //
-  // Dispositivo físico (misma red Wi-Fi que la PC):
-  //   static const _host = '192.168.1.94';
-  //
-  static const _host = '192.168.1.94';
-  static const _port = '3000';
-
-  static const baseUrl = 'http://$_host:$_port/api';
+  // Para dispositivo físico (misma red):
+  //   flutter run --dart-define=API_BASE_URL=http://192.168.1.94:3000/api
+  static const baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:3000/api',
+  );
 
   // Endpoints
-  static const auth         = '$baseUrl/auth';
-  static const lawyers      = '$baseUrl/lawyers';
-  static const cases        = '$baseUrl/cases';
-  static const requests     = '$baseUrl/requests';
-  static const chat         = '$baseUrl/chat';
-  static const aiChat       = '$baseUrl/ai-chat';
-  static const reviews      = '$baseUrl/reviews';
+  static const auth          = '$baseUrl/auth';
+  static const lawyers       = '$baseUrl/lawyers';
+  static const cases         = '$baseUrl/cases';
+  static const requests      = '$baseUrl/requests';
+  static const chat          = '$baseUrl/chat';
+  static const aiChat        = '$baseUrl/ai-chat';
+  static const reviews       = '$baseUrl/reviews';
   static const notifications = '$baseUrl/notifications';
-  static const admin        = '$baseUrl/admin';
+  static const admin         = '$baseUrl/admin';
 }

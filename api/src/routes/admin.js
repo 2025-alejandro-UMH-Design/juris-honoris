@@ -178,4 +178,26 @@ router.delete('/users/:id', ...guard, async (req, res) => {
   res.json({ message: 'Usuario eliminado' });
 });
 
+// GET /api/admin/db-status  — estado de ambas DBs
+router.get('/db-status', ...guard, async (req, res) => {
+  try {
+    const status = await db.getDatabaseStatus();
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/db-switch  — cambiar DB activa
+router.post('/db-switch', ...guard, async (req, res) => {
+  const { target } = req.body;
+  if (!target) return res.status(400).json({ error: 'El campo "target" es requerido (primary | backup)' });
+  try {
+    const active = await db.switchDatabase(target);
+    res.json({ message: `Base de datos cambiada a "${active}" exitosamente`, active });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 module.exports = router;
