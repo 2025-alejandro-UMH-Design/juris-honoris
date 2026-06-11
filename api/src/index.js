@@ -7,7 +7,21 @@ const db      = require('./db');
 const app = express();
 
 // ── Middleware global ──────────────────────────────────────────
-app.use(cors());
+const allowedOrigins = [
+  'https://jurishonorisadmin.vercel.app',
+  'https://jurishonorisadmin-3yrvweaib-alejandro-solorzano-s-projects.vercel.app',
+  /^https:\/\/jurishonorisadmin-.*\.vercel\.app$/,
+  'http://localhost:3001',
+  'http://localhost:3000',
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    const ok = allowedOrigins.some(o => typeof o === 'string' ? o === origin : o.test(origin));
+    cb(ok ? null : new Error('CORS not allowed'), ok);
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
