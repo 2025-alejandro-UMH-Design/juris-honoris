@@ -6,6 +6,9 @@ import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:juris_honoris/features/home/presentation/widgets/lawyer_card.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.dart';
+import 'package:juris_honoris/features/chat/bloc/chat_cubit.dart';
+import 'package:juris_honoris/features/lawyers/presentation/bloc/lawyers_cubit.dart';
+import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
 
 // Auth
 import 'package:juris_honoris/features/auth/presentation/pages/splash_page.dart';
@@ -155,15 +158,17 @@ GoRouter createRouter(AuthCubit authCubit) {
       // ── Lawyers ─────────────────────────────────────────────────────────
       GoRoute(
         path: Routes.lawyers,
-        builder: (context, state) => const LawyerDirectoryPage(),
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<LawyersCubit>(),
+          child: const LawyerDirectoryPage(),
+        ),
       ),
       GoRoute(
         path: '/lawyers/:id',
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
           final lawyer = (state.extra as LawyerData?) ??
-              mockLawyers.firstWhere((l) => l.id == id,
-                  orElse: () => mockLawyers.first);
+              LawyerData(id: id, name: '', specialization: '', rating: 0, cases: 0, verified: false, city: '', about: '');
           return LawyerProfilePage(lawyer: lawyer);
         },
       ),
@@ -172,8 +177,7 @@ GoRouter createRouter(AuthCubit authCubit) {
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
           final lawyer = (state.extra as LawyerData?) ??
-              mockLawyers.firstWhere((l) => l.id == id,
-                  orElse: () => mockLawyers.first);
+              LawyerData(id: id, name: '', specialization: '', rating: 0, cases: 0, verified: false, city: '', about: '');
           return LawyerRequestPage(lawyer: lawyer);
         },
       ),
@@ -181,9 +185,12 @@ GoRouter createRouter(AuthCubit authCubit) {
       // ── Tasks ────────────────────────────────────────────────────────────
       GoRoute(
         path: Routes.tasks,
-        builder: (context, state) => TasksPage(
-          currentNavIndex: 2,
-          onNavChanged: (i) => goNavBottom(context, i),
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<CasesCubit>(),
+          child: TasksPage(
+            currentNavIndex: 2,
+            onNavChanged: (i) => goNavBottom(context, i),
+          ),
         ),
       ),
       GoRoute(
@@ -195,8 +202,7 @@ GoRouter createRouter(AuthCubit authCubit) {
         builder: (context, state) {
           final id = state.pathParameters['id'] ?? '';
           final task = (state.extra as TaskData?) ??
-              mockTasks.firstWhere((t) => t.id == id,
-                  orElse: () => mockTasks.first);
+              TaskData(id: id, title: '', description: '', status: 'pending', category: 'other', priority: 'medium', dueDate: '');
           return TaskDetailPage(task: task);
         },
       ),
@@ -227,10 +233,13 @@ GoRouter createRouter(AuthCubit authCubit) {
         path: '/chat/:lawyerId',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
-          return ClientLawyerChatPage(
-            lawyerId: state.pathParameters['lawyerId'] ?? '',
-            lawyerName: extra['lawyerName'] as String? ?? 'Abogado',
-            caseType: extra['caseType'] as String? ?? 'Caso legal',
+          return BlocProvider(
+            create: (_) => sl<ChatCubit>(),
+            child: ClientLawyerChatPage(
+              lawyerId: state.pathParameters['lawyerId'] ?? '',
+              lawyerName: extra['lawyerName'] as String? ?? 'Abogado',
+              caseType: extra['caseType'] as String? ?? 'Caso legal',
+            ),
           );
         },
       ),

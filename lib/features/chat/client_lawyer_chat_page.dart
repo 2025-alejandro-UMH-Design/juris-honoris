@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
+import 'bloc/chat_cubit.dart';
 
 class ClientLawyerChatPage extends StatefulWidget {
   final String lawyerName;
@@ -20,44 +24,37 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  final List<_ChatMsg> _messages = [
-    const _ChatMsg(
-      text:
-          'Hola, soy su abogado asignado. He revisado su caso y estoy listo para ayudarle. ¿Podría contarme más detalles sobre su situación?',
-      isUser: false,
-      time: '09:00',
-    ),
-    const _ChatMsg(
-      text: 'Muchas gracias por atenderme. Mi situación es la siguiente...',
-      isUser: true,
-      time: '09:02',
-    ),
-    const _ChatMsg(
-      text:
-          'Entiendo. Para proceder necesitaré que me envíe los siguientes documentos: acta de matrimonio, DUI vigente y comprobante de domicilio.',
-      isUser: false,
-      time: '09:05',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ChatCubit>().loadMessages(widget.lawyerId);
+      context.read<ChatCubit>().markRead(widget.lawyerId);
+    });
+  }
+
+  String get _currentUserId {
+    final auth = context.read<AuthCubit>().state;
+    if (auth is AuthAuthenticated) return auth.user.id;
+    return '';
+  }
 
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
-    setState(() {
-      _messages.add(_ChatMsg(
-        text: text,
-        isUser: true,
-        time: TimeOfDay.now().format(context),
-      ));
-    });
     _controller.clear();
-    Future.delayed(const Duration(milliseconds: 100), () {
+    context.read<ChatCubit>().sendMessage(widget.lawyerId, text);
+    Future.delayed(const Duration(milliseconds: 200), _scrollToBottom);
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
-    });
+    }
   }
 
   @override
@@ -113,7 +110,6 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
                       _infoRow('Abogado', widget.lawyerName),
                       _infoRow('Tipo de caso', widget.caseType),
                       _infoRow('Estado', 'En progreso'),
-                      _infoRow('Iniciado', '27 May 2026'),
                     ],
                   ),
                   actions: [
@@ -129,15 +125,11 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            height: 1,
-            color: const Color(0xFFDDDDDD),
-          ),
+          child: Container(height: 1, color: const Color(0xFFDDDDDD)),
         ),
       ),
       body: Column(
         children: [
-          // Info banner
           Container(
             width: double.infinity,
             color: const Color(0xFFE3F2FD),
@@ -149,28 +141,64 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
                 Expanded(
                   child: Text(
                     'Conversación confidencial y protegida',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF0D5BA8),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF0D5BA8)),
                   ),
                 ),
               ],
             ),
           ),
-          // Messages
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                return _buildBubble(msg);
+            child: BlocConsumer<ChatCubit, ChatState>(
+              listener: (context, state) {
+                if (state is ChatLoaded) {
+                  Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+                }
+              },
+              builder: (context, state) {
+                if (state is ChatLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF0D5BA8)),
+                  );
+                }
+                if (state is ChatError) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, color: Color(0xFF757575), size: 48),
+                        const SizedBox(height: 12),
+                        Text(state.message, style: const TextStyle(color: Color(0xFF757575))),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () => context.read<ChatCubit>().loadMessages(widget.lawyerId),
+                          child: const Text('Reintentar'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                final messages = state is ChatLoaded ? state.messages : <ChatMessage>[];
+                final myId = _currentUserId;
+                if (messages.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Inicia la conversación con tu abogado',
+                      style: TextStyle(color: Color(0xFF757575), fontSize: 14),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final msg = messages[index];
+                    return _buildBubble(msg, msg.senderId == myId);
+                  },
+                );
               },
             ),
           ),
-          // Input
           Container(
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -183,8 +211,7 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
                   icon: const Icon(Icons.attach_file, color: Color(0xFF757575)),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Adjuntar archivos — próximamente')),
+                      const SnackBar(content: Text('Adjuntar archivos — próximamente')),
                     );
                   },
                 ),
@@ -199,8 +226,7 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
                       hintStyle: const TextStyle(color: Color(0xFFA8A8A8)),
                       filled: true,
                       fillColor: const Color(0xFFF5F5F5),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,
@@ -218,8 +244,7 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
                       color: Color(0xFF0D5BA8),
                       shape: BoxShape.circle,
                     ),
-                    child:
-                        const Icon(Icons.send, color: Colors.white, size: 20),
+                    child: const Icon(Icons.send, color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -230,23 +255,25 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
     );
   }
 
-  Widget _buildBubble(_ChatMsg msg) {
+  Widget _buildBubble(ChatMessage msg, bool isUser) {
+    final timeStr = '${msg.createdAt.hour.toString().padLeft(2, '0')}:'
+        '${msg.createdAt.minute.toString().padLeft(2, '0')}';
     return Align(
-      alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: EdgeInsets.only(
           bottom: 8,
-          left: msg.isUser ? 48 : 0,
-          right: msg.isUser ? 0 : 48,
+          left: isUser ? 48 : 0,
+          right: isUser ? 0 : 48,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: msg.isUser ? const Color(0xFF0D5BA8) : const Color(0xFFF5F5F5),
+          color: isUser ? const Color(0xFF0D5BA8) : const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(msg.isUser ? 20 : 4),
-            bottomRight: Radius.circular(msg.isUser ? 4 : 20),
+            bottomLeft: Radius.circular(isUser ? 20 : 4),
+            bottomRight: Radius.circular(isUser ? 4 : 20),
           ),
           boxShadow: [
             BoxShadow(
@@ -259,18 +286,30 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            if (!isUser)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  msg.senderName,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0D5BA8),
+                  ),
+                ),
+              ),
             Text(
-              msg.text,
+              msg.content,
               style: TextStyle(
-                color: msg.isUser ? Colors.white : const Color(0xFF212121),
+                color: isUser ? Colors.white : const Color(0xFF212121),
                 fontSize: 15,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              msg.time,
+              timeStr,
               style: TextStyle(
-                color: msg.isUser
+                color: isUser
                     ? Colors.white.withValues(alpha: 0.7)
                     : const Color(0xFF999999),
                 fontSize: 11,
@@ -291,22 +330,11 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
           SizedBox(
             width: 100,
             child: Text(label,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 14)),
-          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 14))),
         ],
       ),
     );
   }
-}
-
-class _ChatMsg {
-  final String text;
-  final bool isUser;
-  final String time;
-  const _ChatMsg(
-      {required this.text, required this.isUser, required this.time});
 }

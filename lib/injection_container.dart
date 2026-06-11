@@ -7,6 +7,9 @@ import 'package:juris_honoris/features/ai_chat/data/repositories/ai_repository_i
 import 'package:juris_honoris/features/ai_chat/domain/repositories/ai_repository.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:juris_honoris/features/chat/bloc/chat_cubit.dart';
+import 'package:juris_honoris/features/lawyers/presentation/bloc/lawyers_cubit.dart';
+import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -43,5 +46,17 @@ Future<void> initDependencies() async {
 
   sl.registerFactory<ChatIACubit>(
     () => ChatIACubit(repository: sl<AIRepository>()),
+  );
+
+  sl.registerFactory<LawyersCubit>(
+    () => LawyersCubit(dio: sl<Dio>()),
+  );
+
+  sl.registerFactory<CasesCubit>(
+    () => CasesCubit(dio: sl<Dio>()),
+  );
+
+  sl.registerFactory<ChatCubit>(
+    () => ChatCubit(dio: sl<Dio>()),
   );
 }

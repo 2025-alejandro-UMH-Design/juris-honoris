@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/bottom_nav_bar.dart';
 import '../../../../shared/widgets/badge_widget.dart';
+import '../bloc/cases_cubit.dart';
 import 'task_detail_page.dart';
 import 'create_task_page.dart';
 
@@ -27,6 +29,19 @@ class TaskData {
     required this.dueDate,
     this.checked = false,
   });
+
+  factory TaskData.fromJson(Map<String, dynamic> j) {
+    return TaskData(
+      id: j['id']?.toString() ?? '',
+      title: j['title']?.toString() ?? '',
+      description: j['description']?.toString() ?? '',
+      status: j['status']?.toString() ?? 'pending',
+      category: j['category']?.toString() ?? 'other',
+      priority: j['priority']?.toString() ?? 'medium',
+      dueDate: j['due_date']?.toString() ?? j['dueDate']?.toString() ?? '',
+      checked: j['status'] == 'completed',
+    );
+  }
 }
 
 /// Datos mock globales de tareas.
@@ -86,7 +101,10 @@ class _TasksPageState extends State<TasksPage> {
   @override
   void initState() {
     super.initState();
-    _tasks = List.from(mockTasks);
+    _tasks = [];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CasesCubit>().loadCases();
+    });
   }
 
   List<TaskData> get _filtered {
@@ -119,7 +137,11 @@ class _TasksPageState extends State<TasksPage> {
   Widget build(BuildContext context) {
     final filtered = _filtered;
 
-    return Scaffold(
+    return BlocListener<CasesCubit, CasesState>(
+      listener: (context, state) {
+        if (state is CasesLoaded) setState(() => _tasks = state.cases);
+      },
+      child: Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.white,
@@ -199,6 +221,7 @@ class _TasksPageState extends State<TasksPage> {
         currentIndex: widget.currentNavIndex,
         onTabChanged: widget.onNavChanged,
       ),
+    ),
     );
   }
 
@@ -207,8 +230,14 @@ class _TasksPageState extends State<TasksPage> {
       context,
       MaterialPageRoute(builder: (_) => const CreateTaskPage()),
     );
-    if (newTask != null) {
-      setState(() => _tasks.add(newTask));
+    if (newTask != null && mounted) {
+      await context.read<CasesCubit>().createCase(
+        title: newTask.title,
+        description: newTask.description,
+        category: newTask.category,
+        priority: newTask.priority,
+        dueDate: newTask.dueDate.isNotEmpty ? newTask.dueDate : null,
+      );
     }
   }
 

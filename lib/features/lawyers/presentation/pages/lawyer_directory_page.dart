@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../home/presentation/widgets/lawyer_card.dart';
+import '../bloc/lawyers_cubit.dart';
 import 'lawyer_profile_page.dart';
 
 class LawyerDirectoryPage extends StatefulWidget {
@@ -15,8 +17,17 @@ class _LawyerDirectoryPageState extends State<LawyerDirectoryPage> {
   final _searchController = TextEditingController();
   String _filterSpec = 'Todos';
   String _query = '';
+  List<LawyerData> _lawyers = const [];
 
   final _specs = ['Todos', 'Familia', 'Penal', 'Laboral', 'Mercantil'];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LawyersCubit>().loadLawyers();
+    });
+  }
 
   @override
   void dispose() {
@@ -25,7 +36,7 @@ class _LawyerDirectoryPageState extends State<LawyerDirectoryPage> {
   }
 
   List<LawyerData> get _filtered {
-    return mockLawyers.where((l) {
+    return _lawyers.where((l) {
       final matchSpec = _filterSpec == 'Todos' ||
           l.specialization.toLowerCase().contains(_specKey(_filterSpec));
       final matchQuery = _query.isEmpty ||
@@ -49,7 +60,13 @@ class _LawyerDirectoryPageState extends State<LawyerDirectoryPage> {
   Widget build(BuildContext context) {
     final filtered = _filtered;
 
-    return Scaffold(
+    return BlocListener<LawyersCubit, LawyersState>(
+      listener: (context, state) {
+        if (state is LawyersLoaded) {
+          setState(() => _lawyers = state.lawyers);
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.white,
@@ -230,6 +247,7 @@ class _LawyerDirectoryPageState extends State<LawyerDirectoryPage> {
           ),
         ],
       ),
+    ),
     );
   }
 }
