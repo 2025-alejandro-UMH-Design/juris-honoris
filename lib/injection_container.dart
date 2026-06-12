@@ -6,6 +6,7 @@ import 'package:juris_honoris/core/services/token_storage.dart';
 import 'package:juris_honoris/features/ai_chat/data/repositories/ai_repository_impl.dart';
 import 'package:juris_honoris/features/ai_chat/domain/repositories/ai_repository.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.dart';
+import 'package:juris_honoris/features/ai_chat/presentation/bloc/recommendations_cubit.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:juris_honoris/features/chat/bloc/chat_cubit.dart';
 import 'package:juris_honoris/features/lawyers/presentation/bloc/lawyers_cubit.dart';
@@ -58,5 +59,9 @@ Future<void> initDependencies() async {
 
   sl.registerFactory<ChatCubit>(
     () => ChatCubit(dio: sl<Dio>()),
+  );
+
+  sl.registerFactory<RecommendationsCubit>(
+    () => RecommendationsCubit(dio: sl<Dio>()),
   );
 }

@@ -8,6 +8,9 @@ import 'package:juris_honoris/shared/widgets/app_button.dart';
 import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
 import 'package:juris_honoris/features/tasks/presentation/pages/tasks_page.dart';
 import 'package:juris_honoris/features/tasks/presentation/pages/create_task_page.dart';
+import 'package:juris_honoris/features/ai_chat/presentation/bloc/recommendations_cubit.dart';
+import 'package:juris_honoris/features/ai_chat/presentation/pages/required_docs_page.dart';
+import 'package:juris_honoris/injection_container.dart';
 
 class AIResultPage extends StatefulWidget {
   final String consultaSummary;
@@ -25,6 +28,19 @@ class AIResultPage extends StatefulWidget {
 
 class _AIResultPageState extends State<AIResultPage> {
   bool _isCreating = false;
+
+  void _openDocGuide() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => sl<RecommendationsCubit>(),
+          child: RequiredDocsPage(
+            consultaSummary: widget.consultaSummary,
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> _handleCreateHito() async {
     final newTask = await Navigator.push<TaskData>(
@@ -159,14 +175,7 @@ class _AIResultPageState extends State<AIResultPage> {
                   variant: ButtonVariant.secondary,
                   onPressed: widget.needsLawyer
                       ? () => context.go('/lawyers')
-                      : () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Próximamente: guía de documentos'),
-                            ),
-                          );
-                        },
+                      : _openDocGuide,
                 ),
                 const SizedBox(height: AppSizes.xl),
               ],
