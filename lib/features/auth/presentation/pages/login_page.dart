@@ -6,6 +6,7 @@ import 'package:juris_honoris/core/constants/app_sizes.dart';
 import 'package:juris_honoris/core/utils/validators.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:juris_honoris/shared/widgets/app_button.dart';
+import 'package:juris_honoris/shared/widgets/google_sign_in_button.dart';
 
 import 'register_page.dart';
 import 'forgot_password_page.dart';
@@ -159,8 +160,28 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: isLoading ? null : _submit,
                       isLoading: isLoading,
                     ),
-                    const SizedBox(height: AppSizes.xl),
+                    const SizedBox(height: AppSizes.lg),
 
+                    // ── Divider ───────────────────────────────────────
+                    Row(
+                      children: [
+                        const Expanded(child: Divider(color: AppColors.borderColor)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+                          child: Text(
+                            'o continúa con',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.greyMedium,
+                                ),
+                          ),
+                        ),
+                        const Expanded(child: Divider(color: AppColors.borderColor)),
+                      ],
+                    ),
+                    const SizedBox(height: AppSizes.lg),
+
+                    // ── Google Sign-In ────────────────────────────────
+                    GoogleSignInButton(isLoading: isLoading),
                     const SizedBox(height: AppSizes.md),
 
                     // ── Links ─────────────────────────────────────────

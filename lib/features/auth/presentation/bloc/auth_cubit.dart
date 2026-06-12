@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:juris_honoris/core/constants/api_config.dart';
 import 'package:juris_honoris/core/services/token_storage.dart';
@@ -11,6 +12,9 @@ part 'auth_state.dart';
 class AuthCubit extends Cubit<AuthState> {
   final Dio _dio;
   final TokenStorage _tokenStorage;
+
+  static const _webClientId =
+      '1009397974171-96o9mrncetemlh03li048e4fj7k4cue7.apps.googleusercontent.com';
 
   UserEntity? _currentUser;
 
@@ -92,6 +96,36 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthError(msg.toString()));
     } catch (e) {
       emit(const AuthError('Error al crear cuenta'));
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    emit(const AuthLoading());
+    try {
+      final googleSignIn = GoogleSignIn(serverClientId: _webClientId);
+      final account = await googleSignIn.signIn();
+      if (account == null) {
+        emit(const AuthUnauthenticated());
+        return;
+      }
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null) throw Exception('No se pudo obtener token de Google');
+
+      final res = await _dio.post(
+        '${ApiConfig.auth}/google',
+        data: {'id_token': idToken},
+      );
+      final token = res.data['token'] as String;
+      await _tokenStorage.save(token);
+      final user = UserEntity.fromJson(res.data['user'] as Map<String, dynamic>);
+      _currentUser = user;
+      emit(AuthAuthenticated(user));
+    } on DioException catch (e) {
+      final msg = e.response?.data?['error'] ?? 'Error al iniciar con Google';
+      emit(AuthError(msg.toString()));
+    } catch (_) {
+      emit(const AuthError('Error al iniciar sesión con Google'));
     }
   }
 

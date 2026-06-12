@@ -61,6 +61,55 @@ router.post('/register', async (req, res) => {
   res.status(201).json({ token, user: sanitize(rows[0]) });
 });
 
+// POST /api/auth/google  — login/registro con Google ID token
+router.post('/google', async (req, res) => {
+  const { id_token } = req.body;
+  if (!id_token) return res.status(400).json({ error: 'id_token requerido' });
+
+  try {
+    const r = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${id_token}`);
+    const info = await r.json();
+
+    if (!r.ok || info.error) {
+      return res.status(401).json({ error: 'Token de Google inválido' });
+    }
+
+    const webClientId = process.env.GOOGLE_WEB_CLIENT_ID;
+    if (webClientId && info.aud !== webClientId) {
+      return res.status(401).json({ error: 'Token no autorizado para esta aplicación' });
+    }
+
+    const email = info.email?.toLowerCase();
+    const name  = info.name || (email ? email.split('@')[0] : 'Usuario');
+    const googleId = info.sub;
+
+    if (!email) return res.status(400).json({ error: 'Email no disponible en la cuenta Google' });
+
+    let { rows } = await db.query('select * from users where email = $1', [email]);
+    let user = rows[0];
+
+    if (!user) {
+      const randomHash = await bcrypt.hash(Math.random().toString(36) + googleId, 10);
+      const insert = await db.query(
+        `insert into users (email, password_hash, full_name, role, plan, is_verified)
+         values ($1, $2, $3, 'client', 'free', true) returning *`,
+        [email, randomHash, name]
+      );
+      user = insert.rows[0];
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
+    res.json({ token, user: sanitize(user) });
+  } catch (e) {
+    res.status(500).json({ error: 'Error al verificar con Google' });
+  }
+});
+
 // GET /api/auth/me
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await db.query('select * from users where id = $1', [req.user.id]);
