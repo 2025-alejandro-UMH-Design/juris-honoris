@@ -91,7 +91,7 @@ class _BubbleContent extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.06),
+            color: AppColors.black.withValues(alpha: 0.06),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -118,12 +118,11 @@ class _NeedsLawyerBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = needsLawyer ? AppColors.errorRed : AppColors.successGreen;
     final bgColor = needsLawyer
-        ? AppColors.errorRed.withOpacity(0.1)
-        : AppColors.successGreen.withOpacity(0.1);
+        ? AppColors.errorRed.withValues(alpha: 0.1)
+        : AppColors.successGreen.withValues(alpha: 0.1);
     final icon = needsLawyer ? Icons.gavel : Icons.check_circle_outline;
-    final label = needsLawyer
-        ? 'Recomendamos un abogado'
-        : 'Puedes gestionarlo solo';
+    final label =
+        needsLawyer ? 'Recomendamos un abogado' : 'Puedes gestionarlo solo';
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -133,7 +132,7 @@ class _NeedsLawyerBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

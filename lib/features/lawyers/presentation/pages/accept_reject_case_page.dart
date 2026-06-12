@@ -98,37 +98,31 @@ class AcceptRejectCasePage extends StatelessWidget {
           children: [
             const Text(
               'Indica el motivo del rechazo (opcional):',
-              style: TextStyle(
-                  fontSize: 13, color: AppColors.subtitleGrey),
+              style: TextStyle(fontSize: 13, color: AppColors.subtitleGrey),
             ),
             const SizedBox(height: AppSizes.sm),
             TextField(
               controller: reasonController,
               maxLines: 3,
-              style: const TextStyle(
-                  fontSize: 13, color: AppColors.greyDark),
+              style: const TextStyle(fontSize: 13, color: AppColors.greyDark),
               decoration: InputDecoration(
-                hintText: 'Ej. Conflicto de interés, fuera de mi especialidad...',
-                hintStyle: const TextStyle(
-                    fontSize: 13, color: AppColors.hintGrey),
+                hintText:
+                    'Ej. Conflicto de interés, fuera de mi especialidad...',
+                hintStyle:
+                    const TextStyle(fontSize: 13, color: AppColors.hintGrey),
                 filled: true,
                 fillColor: AppColors.greyVeryLight,
                 contentPadding: const EdgeInsets.all(AppSizes.md),
                 border: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSizes.inputRadius),
-                  borderSide:
-                      const BorderSide(color: AppColors.borderColor),
+                  borderRadius: BorderRadius.circular(AppSizes.inputRadius),
+                  borderSide: const BorderSide(color: AppColors.borderColor),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSizes.inputRadius),
-                  borderSide:
-                      const BorderSide(color: AppColors.borderColor),
+                  borderRadius: BorderRadius.circular(AppSizes.inputRadius),
+                  borderSide: const BorderSide(color: AppColors.borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppSizes.inputRadius),
+                  borderRadius: BorderRadius.circular(AppSizes.inputRadius),
                   borderSide: const BorderSide(
                       color: AppColors.primaryBlue, width: 1.5),
                 ),
@@ -194,13 +188,13 @@ class AcceptRejectCasePage extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: AppSizes.md),
                 padding: const EdgeInsets.all(AppSizes.md),
                 decoration: BoxDecoration(
-                  color: AppColors.successGreen.withOpacity(0.1),
+                  color: AppColors.successGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSizes.cardRadius),
                   border: Border.all(
-                      color: AppColors.successGreen.withOpacity(0.3)),
+                      color: AppColors.successGreen.withValues(alpha: 0.3)),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.card_giftcard,
                         color: AppColors.successGreen, size: 20),
                     SizedBox(width: AppSizes.sm),
@@ -269,9 +263,7 @@ class AcceptRejectCasePage extends StatelessWidget {
                   Text(
                     caseData['description'] as String,
                     style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.greyDark,
-                        height: 1.6),
+                        fontSize: 14, color: AppColors.greyDark, height: 1.6),
                   ),
                   const SizedBox(height: AppSizes.lg),
 
@@ -313,8 +305,8 @@ class AcceptRejectCasePage extends StatelessWidget {
                         color: AppColors.primaryBlue),
                   ),
                   const SizedBox(height: AppSizes.sm),
-                  Row(
-                    children: const [
+                  const Row(
+                    children: [
                       Icon(Icons.attach_money,
                           size: 16, color: AppColors.greyMedium),
                       SizedBox(width: AppSizes.xs),
@@ -392,10 +384,9 @@ class _TypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.primaryBlue.withOpacity(0.1),
+        color: AppColors.primaryBlue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -416,8 +407,7 @@ class _UrgencyBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 3),
       decoration: BoxDecoration(
         color: isUrgent ? AppColors.errorRed : AppColors.greyLight,
         borderRadius: BorderRadius.circular(4),

@@ -561,18 +561,18 @@ class _StepDocuments extends StatelessWidget {
       subtitle: 'Sube los documentos requeridos para verificar tu identidad',
       onNext: onNext,
       children: [
-        Text(
+        const Text(
           'Formatos aceptados: JPG, PNG, PDF. Máximo 5MB',
-          style: const TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
+          style: TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
         ),
         const SizedBox(height: AppSizes.lg),
-        _DocumentUploadCard(
+        const _DocumentUploadCard(
           title: 'Cédula de identidad',
           description: 'Foto o escaneo de tu DNI vigente',
           icon: Icons.credit_card_outlined,
         ),
         const SizedBox(height: AppSizes.md),
-        _DocumentUploadCard(
+        const _DocumentUploadCard(
           title: 'Constancia del Colegio de Abogados',
           description: 'Documento que acredita tu colegiación activa',
           icon: Icons.workspace_premium_outlined,
@@ -581,12 +581,13 @@ class _StepDocuments extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(AppSizes.md),
           decoration: BoxDecoration(
-            color: AppColors.primaryBlue.withOpacity(0.05),
+            color: AppColors.primaryBlue.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-            border: Border.all(color: AppColors.primaryBlue.withOpacity(0.2)),
+            border:
+                Border.all(color: AppColors.primaryBlue.withValues(alpha: 0.2)),
           ),
-          child: Row(
-            children: const [
+          child: const Row(
+            children: [
               Icon(Icons.info_outline, color: AppColors.primaryBlue, size: 18),
               SizedBox(width: AppSizes.sm),
               Expanded(
@@ -634,7 +635,7 @@ class _DocumentUploadCardState extends State<_DocumentUploadCard> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.1),
+                  color: AppColors.primaryBlue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child:
@@ -755,7 +756,7 @@ class _StepWorkZone extends StatelessWidget {
         ),
         const SizedBox(height: AppSizes.sm),
         DropdownButtonFormField<String>(
-          value: selectedCity,
+          initialValue: selectedCity,
           hint: const Text('Selecciona una ciudad'),
           onChanged: onCityChanged,
           items: cities
@@ -874,13 +875,14 @@ class _StepRates extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(AppSizes.md),
           decoration: BoxDecoration(
-            color: AppColors.primaryBlue.withOpacity(0.06),
+            color: AppColors.primaryBlue.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-            border: Border.all(color: AppColors.primaryBlue.withOpacity(0.2)),
+            border:
+                Border.all(color: AppColors.primaryBlue.withValues(alpha: 0.2)),
           ),
-          child: Column(
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Row(
                 children: [
                   Icon(Icons.info_outline,
@@ -1079,11 +1081,10 @@ class _StepConfirmation extends StatelessWidget {
             icon: Icons.send_outlined,
           ),
           const SizedBox(height: AppSizes.md),
-          Center(
+          const Center(
             child: Text(
               'Tu solicitud será revisada en 24-48 horas hábiles',
-              style:
-                  const TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
+              style: TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
               textAlign: TextAlign.center,
             ),
           ),
@@ -1161,7 +1162,7 @@ class _SuccessScreen extends StatelessWidget {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: AppColors.successGreen.withOpacity(0.1),
+                  color: AppColors.successGreen.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check_circle_outline,

@@ -72,7 +72,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.06),
+            color: AppColors.black.withValues(alpha: 0.06),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

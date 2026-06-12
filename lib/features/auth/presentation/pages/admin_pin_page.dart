@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
-import 'package:juris_honoris/shared/widgets/app_button.dart';
 
 /// Pantalla de acceso rápido al panel de administrador mediante PIN.
 /// PIN por defecto (demo): 1234

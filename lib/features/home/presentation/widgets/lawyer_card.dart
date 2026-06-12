@@ -24,6 +24,21 @@ class LawyerData {
     required this.about,
   });
 
+  factory LawyerData.fromJson(Map<String, dynamic> j) {
+    final profile = j['profile'] as Map<String, dynamic>? ?? j;
+    final specs = (j['specialties'] as List?)?.cast<String>() ?? [];
+    return LawyerData(
+      id: j['id']?.toString() ?? '',
+      name: j['full_name']?.toString() ?? j['name']?.toString() ?? '',
+      specialization: specs.isNotEmpty ? specs.first : (profile['specialty']?.toString() ?? 'General'),
+      rating: (j['avg_rating'] ?? profile['avg_rating'] ?? 0.0).toDouble(),
+      cases: (j['total_cases'] ?? profile['total_cases'] ?? 0) as int,
+      verified: j['is_verified'] == true,
+      city: profile['city']?.toString() ?? j['city']?.toString() ?? '',
+      about: profile['about']?.toString() ?? j['about']?.toString() ?? '',
+    );
+  }
+
   String get initials {
     final parts = name.trim().split(' ');
     if (parts.length >= 2) {
@@ -64,8 +79,7 @@ final mockLawyers = [
     cases: 58,
     verified: true,
     city: 'Tegucigalpa',
-    about:
-        'Defensora penal con experiencia en casos criminales y amparo.',
+    about: 'Defensora penal con experiencia en casos criminales y amparo.',
   ),
   const LawyerData(
     id: 'l4',
@@ -75,8 +89,7 @@ final mockLawyers = [
     cases: 22,
     verified: true,
     city: 'Comayagüela',
-    about:
-        'Especialista en contratos, sociedades y derecho comercial.',
+    about: 'Especialista en contratos, sociedades y derecho comercial.',
   ),
 ];
 
@@ -98,7 +111,9 @@ class LawyerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return compact ? _CompactCard(lawyer: lawyer, onVerPerfil: onVerPerfil) : _FullCard(lawyer: lawyer, onVerPerfil: onVerPerfil);
+    return compact
+        ? _CompactCard(lawyer: lawyer, onVerPerfil: onVerPerfil)
+        : _FullCard(lawyer: lawyer, onVerPerfil: onVerPerfil);
   }
 }
 
@@ -331,7 +346,7 @@ class _Avatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.primaryBlue.withOpacity(0.12),
+        color: AppColors.primaryBlue.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
@@ -359,11 +374,14 @@ class _StarRating extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: List.generate(5, (i) {
         if (i < rating.floor()) {
-          return Icon(Icons.star_rounded, size: size, color: AppColors.secondaryOrange);
+          return Icon(Icons.star_rounded,
+              size: size, color: AppColors.secondaryOrange);
         } else if (i < rating) {
-          return Icon(Icons.star_half_rounded, size: size, color: AppColors.secondaryOrange);
+          return Icon(Icons.star_half_rounded,
+              size: size, color: AppColors.secondaryOrange);
         } else {
-          return Icon(Icons.star_outline_rounded, size: size, color: AppColors.greyLight);
+          return Icon(Icons.star_outline_rounded,
+              size: size, color: AppColors.greyLight);
         }
       }),
     );

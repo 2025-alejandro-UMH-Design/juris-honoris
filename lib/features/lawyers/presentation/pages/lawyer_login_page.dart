@@ -62,7 +62,7 @@ class _LawyerLoginPageState extends State<LawyerLoginPage> {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBlue.withOpacity(0.1),
+                    color: AppColors.primaryBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
@@ -180,7 +180,7 @@ class _LawyerLoginPageState extends State<LawyerLoginPage> {
                 const SizedBox(height: AppSizes.xl),
 
                 // ── Register link ─────────────────────────────────────
-                Row(
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
@@ -212,7 +212,7 @@ class _LawyerLoginPageState extends State<LawyerLoginPage> {
                 const SizedBox(height: AppSizes.xl),
                 const Divider(color: AppColors.borderColor),
                 const SizedBox(height: AppSizes.sm),
-                Text(
+                const Text(
                   'Demo: cualquier credencial válida funciona',
                   style: TextStyle(
                     color: AppColors.greyMedium,
@@ -254,8 +254,7 @@ class _LawyerLoginPageState extends State<LawyerLoginPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.inputRadius),
-        borderSide:
-            const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.inputRadius),

@@ -29,7 +29,7 @@ class ActionButtonsBar extends StatelessWidget {
           horizontal: AppSizes.lg,
           vertical: AppSizes.md,
         ),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.white,
           border: Border(
             top: BorderSide(color: AppColors.borderColor, width: 1),
@@ -41,7 +41,9 @@ class ActionButtonsBar extends StatelessWidget {
               child: _ActionButton(
                 label: needsLawyer ? 'Solicitar Abogado' : 'Ver mis documentos',
                 icon: needsLawyer ? Icons.gavel : Icons.folder_open,
-                variant: needsLawyer ? _ButtonVariant.danger : _ButtonVariant.success,
+                variant: needsLawyer
+                    ? _ButtonVariant.danger
+                    : _ButtonVariant.success,
                 onPressed: onPrimaryAction,
               ),
             ),

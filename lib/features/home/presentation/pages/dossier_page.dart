@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/bottom_nav_bar.dart';
@@ -6,6 +7,7 @@ import '../../../../shared/widgets/badge_widget.dart';
 import '../../../tasks/presentation/pages/tasks_page.dart';
 import '../../../tasks/presentation/pages/task_detail_page.dart';
 import '../../../tasks/presentation/pages/create_task_page.dart';
+import '../../../tasks/presentation/bloc/cases_cubit.dart';
 
 class DossierPage extends StatefulWidget {
   final int currentNavIndex;
@@ -23,14 +25,16 @@ class DossierPage extends StatefulWidget {
 
 class _DossierPageState extends State<DossierPage> {
   String _filter = 'Todos';
-  late List<TaskData> _items;
+  List<TaskData> _items = const [];
 
   final _filters = ['Todos', 'Activos', 'Completados', 'Pendientes'];
 
   @override
   void initState() {
     super.initState();
-    _items = List.from(mockTasks);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<CasesCubit>().loadCases();
+    });
   }
 
   List<TaskData> get _filtered {
@@ -46,7 +50,11 @@ class _DossierPageState extends State<DossierPage> {
   Widget build(BuildContext context) {
     final filtered = _filtered;
 
-    return Scaffold(
+    return BlocListener<CasesCubit, CasesState>(
+      listener: (_, state) {
+        if (state is CasesLoaded) setState(() => _items = state.cases);
+      },
+      child: Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.white,
@@ -112,6 +120,7 @@ class _DossierPageState extends State<DossierPage> {
         currentIndex: widget.currentNavIndex,
         onTabChanged: widget.onNavChanged,
       ),
+    ),
     );
   }
 
@@ -120,8 +129,14 @@ class _DossierPageState extends State<DossierPage> {
       context,
       MaterialPageRoute(builder: (_) => const CreateTaskPage()),
     );
-    if (newTask != null) {
-      setState(() => _items.add(newTask));
+    if (newTask != null && mounted) {
+      context.read<CasesCubit>().createCase(
+        title: newTask.title,
+        description: newTask.description,
+        category: newTask.category,
+        priority: newTask.priority,
+        dueDate: newTask.dueDate.isNotEmpty ? newTask.dueDate : null,
+      );
     }
   }
 }

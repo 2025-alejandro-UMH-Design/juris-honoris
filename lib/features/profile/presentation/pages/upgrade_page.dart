@@ -65,7 +65,6 @@ class UpgradePage extends StatelessWidget {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(AppSizes.pagePadding),
@@ -215,9 +214,9 @@ class _ComparisonTable extends StatelessWidget {
                 topRight: Radius.circular(AppSizes.cardRadius),
               ),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Expanded(
+                Expanded(
                   flex: 2,
                   child: Padding(
                     padding: EdgeInsets.all(AppSizes.md),
@@ -250,10 +249,12 @@ class _ComparisonTable extends StatelessWidget {
             final f = e.value;
             return Container(
               decoration: BoxDecoration(
-                border: Border(
+                border: const Border(
                   top: BorderSide(color: AppColors.borderColor),
                 ),
-                color: i.isOdd ? AppColors.greyVeryLight.withOpacity(0.5) : null,
+                color: i.isOdd
+                    ? AppColors.greyVeryLight.withValues(alpha: 0.5)
+                    : null,
               ),
               child: Row(
                 children: [
@@ -335,7 +336,7 @@ class _HeaderCell extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 color: isPrimary
-                    ? AppColors.white.withOpacity(0.85)
+                    ? AppColors.white.withValues(alpha: 0.85)
                     : AppColors.greyMedium,
               ),
               textAlign: TextAlign.center,
@@ -421,7 +422,7 @@ class _PriceButton extends StatelessWidget {
           boxShadow: isPrimary
               ? [
                   BoxShadow(
-                    color: AppColors.primaryBlue.withOpacity(0.3),
+                    color: AppColors.primaryBlue.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -441,7 +442,8 @@ class _PriceButton extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: isPrimary ? AppColors.white : AppColors.greyDark,
+                          color:
+                              isPrimary ? AppColors.white : AppColors.greyDark,
                         ),
                       ),
                       if (badge != null) ...[
@@ -473,7 +475,7 @@ class _PriceButton extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       color: isPrimary
-                          ? AppColors.white.withOpacity(0.8)
+                          ? AppColors.white.withValues(alpha: 0.8)
                           : AppColors.greyMedium,
                     ),
                   ),

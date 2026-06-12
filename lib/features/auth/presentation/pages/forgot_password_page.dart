@@ -63,7 +63,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryBlue.withOpacity(0.1),
+                      color: AppColors.primaryBlue.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -137,8 +137,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       errorBorder: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(AppSizes.inputRadius),
-                        borderSide:
-                            const BorderSide(color: AppColors.errorRed),
+                        borderSide: const BorderSide(color: AppColors.errorRed),
                       ),
                       focusedErrorBorder: OutlineInputBorder(
                         borderRadius:
@@ -183,10 +182,10 @@ class _SuccessBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSizes.lg),
       decoration: BoxDecoration(
-        color: AppColors.successGreen.withOpacity(0.1),
+        color: AppColors.successGreen.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
         border: Border.all(
-          color: AppColors.successGreen.withOpacity(0.4),
+          color: AppColors.successGreen.withValues(alpha: 0.4),
         ),
       ),
       child: Row(

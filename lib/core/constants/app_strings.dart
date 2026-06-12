@@ -113,6 +113,7 @@ class AppStrings {
   static const String navChatIa = 'Chat IA';
   static const String navTareas = 'Tareas';
   static const String navDossier = 'Dossier';
+  static const String navPerfil = 'Perfil';
 
   // --- Tareas ---
   static const String tareas = 'Tareas';

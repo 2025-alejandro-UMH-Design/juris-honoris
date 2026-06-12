@@ -26,18 +26,15 @@ class LawyerProfileEditPage extends StatefulWidget {
   const LawyerProfileEditPage({super.key});
 
   @override
-  State<LawyerProfileEditPage> createState() =>
-      _LawyerProfileEditPageState();
+  State<LawyerProfileEditPage> createState() => _LawyerProfileEditPageState();
 }
 
 class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
   final _formKey = GlobalKey<FormState>();
 
   // Mock pre-filled data
-  final _nombreController =
-      TextEditingController(text: 'Carlos Mendoza López');
-  final _telefonoController =
-      TextEditingController(text: '+504 9876-5432');
+  final _nombreController = TextEditingController(text: 'Carlos Mendoza López');
+  final _telefonoController = TextEditingController(text: '+504 9876-5432');
   final _bioController = TextEditingController(
     text:
         'Abogado con 8 años de experiencia en derecho de familia y civil. Especialista en mediación y resolución de conflictos.',
@@ -74,8 +71,7 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
           ),
           backgroundColor: AppColors.successGreen,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     });
@@ -110,10 +106,10 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                   children: [
                     Stack(
                       children: [
-                        CircleAvatar(
+                        const CircleAvatar(
                           radius: 44,
                           backgroundColor: AppColors.primaryBlue,
-                          child: const Text(
+                          child: Text(
                             'CM',
                             style: TextStyle(
                                 color: AppColors.white,
@@ -128,8 +124,8 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text(
-                                        'Cambio de foto próximamente')),
+                                    content:
+                                        Text('Cambio de foto próximamente')),
                               );
                             },
                             child: Container(
@@ -139,17 +135,14 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                                 color: AppColors.white,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                    color: AppColors.borderColor,
-                                    width: 1.5),
+                                    color: AppColors.borderColor, width: 1.5),
                                 boxShadow: const [
                                   BoxShadow(
-                                      color: Color(0x1A000000),
-                                      blurRadius: 4),
+                                      color: Color(0x1A000000), blurRadius: 4),
                                 ],
                               ),
                               child: const Icon(Icons.camera_alt,
-                                  size: 14,
-                                  color: AppColors.primaryBlue),
+                                  size: 14, color: AppColors.primaryBlue),
                             ),
                           ),
                         ),
@@ -160,8 +153,7 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content:
-                                  Text('Cambio de foto próximamente')),
+                              content: Text('Cambio de foto próximamente')),
                         );
                       },
                       child: const Text(
@@ -177,11 +169,11 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: AppSizes.md, vertical: AppSizes.xs),
                       decoration: BoxDecoration(
-                        color: AppColors.successGreen.withOpacity(0.1),
+                        color: AppColors.successGreen.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                             color:
-                                AppColors.successGreen.withOpacity(0.3)),
+                                AppColors.successGreen.withValues(alpha: 0.3)),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -208,19 +200,18 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
               const _SectionTitle('Información personal'),
               const SizedBox(height: AppSizes.md),
 
-              _FormLabel('Nombre completo'),
+              const _FormLabel('Nombre completo'),
               const SizedBox(height: AppSizes.xs),
               _ProfileField(
                 controller: _nombreController,
                 hint: 'Tu nombre completo',
                 prefixIcon: Icons.person_outline,
-                validator: (v) => v == null || v.isEmpty
-                    ? 'Ingresa tu nombre'
-                    : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Ingresa tu nombre' : null,
               ),
               const SizedBox(height: AppSizes.md),
 
-              _FormLabel('Teléfono'),
+              const _FormLabel('Teléfono'),
               const SizedBox(height: AppSizes.xs),
               _ProfileField(
                 controller: _telefonoController,
@@ -230,7 +221,7 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
               ),
               const SizedBox(height: AppSizes.md),
 
-              _FormLabel('Descripción / Biografía'),
+              const _FormLabel('Descripción / Biografía'),
               const SizedBox(height: AppSizes.xs),
               _ProfileField(
                 controller: _bioController,
@@ -243,10 +234,9 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
               // ── Specialties ────────────────────────────────────
               const _SectionTitle('Especialidades'),
               const SizedBox(height: AppSizes.xs),
-              Text(
+              const Text(
                 'Selecciona todas las que apliquen',
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.subtitleGrey),
+                style: TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
               ),
               const SizedBox(height: AppSizes.sm),
               Wrap(
@@ -265,9 +255,8 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: AppSizes.md, vertical: AppSizes.sm),
                       decoration: BoxDecoration(
-                        color: selected
-                            ? AppColors.primaryBlue
-                            : AppColors.white,
+                        color:
+                            selected ? AppColors.primaryBlue : AppColors.white,
                         border: Border.all(
                           color: selected
                               ? AppColors.primaryBlue
@@ -278,13 +267,11 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                       child: Text(
                         s,
                         style: TextStyle(
-                          color: selected
-                              ? AppColors.white
-                              : AppColors.greyDark,
+                          color:
+                              selected ? AppColors.white : AppColors.greyDark,
                           fontSize: 13,
-                          fontWeight: selected
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                          fontWeight:
+                              selected ? FontWeight.w600 : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -297,20 +284,19 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
               const _SectionTitle('Zona y tarifas'),
               const SizedBox(height: AppSizes.md),
 
-              _FormLabel('Ciudad / Departamento'),
+              const _FormLabel('Ciudad / Departamento'),
               const SizedBox(height: AppSizes.xs),
               DropdownButtonFormField<String>(
-                value: _selectedCity,
+                initialValue: _selectedCity,
                 onChanged: (v) => setState(() => _selectedCity = v),
                 items: _cities
-                    .map((c) =>
-                        DropdownMenuItem(value: c, child: Text(c)))
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
                 decoration: _dropdownDecoration(),
               ),
               const SizedBox(height: AppSizes.md),
 
-              _FormLabel('Tarifa consulta inicial (L.)'),
+              const _FormLabel('Tarifa consulta inicial (L.)'),
               const SizedBox(height: AppSizes.xs),
               _ProfileField(
                 controller: _tarifaController,
@@ -324,7 +310,7 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
               const _SectionTitle('Documentos'),
               const SizedBox(height: AppSizes.md),
 
-              AppCard(
+              const AppCard(
                 child: Column(
                   children: [
                     _DocumentStatusRow(
@@ -333,8 +319,7 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                       isVerified: true,
                       icon: Icons.credit_card_outlined,
                     ),
-                    const Divider(
-                        color: AppColors.borderColor, height: 20),
+                    Divider(color: AppColors.borderColor, height: 20),
                     _DocumentStatusRow(
                       title: 'Constancia Colegio de Abogados',
                       status: 'Verificado',
@@ -363,8 +348,8 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
 
   InputDecoration _dropdownDecoration() {
     return InputDecoration(
-      prefixIcon: const Icon(Icons.location_on_outlined,
-          color: AppColors.greyMedium),
+      prefixIcon:
+          const Icon(Icons.location_on_outlined, color: AppColors.greyMedium),
       filled: true,
       fillColor: AppColors.white,
       contentPadding: const EdgeInsets.symmetric(
@@ -379,8 +364,7 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.inputRadius),
-        borderSide:
-            const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
       ),
     );
   }
@@ -397,9 +381,7 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: AppColors.greyDark),
+          fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.greyDark),
     );
   }
 }
@@ -413,9 +395,7 @@ class _FormLabel extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.greyDark),
+          fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.greyDark),
     );
   }
 }
@@ -447,8 +427,7 @@ class _ProfileField extends StatelessWidget {
       style: const TextStyle(fontSize: 14, color: AppColors.greyDark),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-            const TextStyle(color: AppColors.hintGrey, fontSize: 14),
+        hintStyle: const TextStyle(color: AppColors.hintGrey, fontSize: 14),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: AppColors.greyMedium, size: 20)
             : null,
@@ -499,7 +478,7 @@ class _DocumentStatusRow extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: AppColors.primaryBlue.withOpacity(0.1),
+            color: AppColors.primaryBlue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: AppColors.primaryBlue, size: 18),
@@ -518,9 +497,7 @@ class _DocumentStatusRow extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isVerified
-                  ? Icons.check_circle
-                  : Icons.hourglass_top_outlined,
+              isVerified ? Icons.check_circle : Icons.hourglass_top_outlined,
               color: isVerified
                   ? AppColors.successGreen
                   : AppColors.secondaryOrange,

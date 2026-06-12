@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -8,9 +9,11 @@ import '../widgets/lawyer_card.dart';
 import '../../../tasks/presentation/pages/tasks_page.dart';
 import '../../../tasks/presentation/pages/task_detail_page.dart';
 import '../../../lawyers/presentation/pages/lawyer_profile_page.dart';
-import '../../../lawyers/presentation/pages/lawyer_directory_page.dart';
 import '../../../profile/presentation/pages/upgrade_page.dart';
-import 'dossier_page.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../auth/domain/entities/user_entity.dart';
+import '../../../tasks/presentation/bloc/cases_cubit.dart';
+import '../../../lawyers/presentation/bloc/lawyers_cubit.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,43 +24,29 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentTab = 0;
+  List<TaskData> _cases = const [];
+  List<LawyerData> _lawyers = const [];
 
-  // Datos mock del usuario
-  static const _userName = 'Ana';
-  static const _isPremium = false;
-  static const _solicitationsUsed = 1;
-  static const _solicitationsMax = 3;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<CasesCubit>().loadCases();
+      context.read<LawyersCubit>().loadLawyers();
+    });
+  }
 
   void _onTabChanged(int index) {
     switch (index) {
       case 1:
         context.go('/chat-ia');
       case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => TasksPage(
-              currentNavIndex: 2,
-              onNavChanged: (i) {
-                Navigator.pop(context);
-                if (i != 2) _onTabChanged(i);
-              },
-            ),
-          ),
-        );
+        context.go('/tasks');
       case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DossierPage(
-              currentNavIndex: 3,
-              onNavChanged: (i) {
-                Navigator.pop(context);
-                if (i != 3) _onTabChanged(i);
-              },
-            ),
-          ),
-        );
+        context.go('/dossier');
+      case 4:
+        context.go('/profile');
       default:
         setState(() => _currentTab = index);
     }
@@ -65,6 +54,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.read<AuthCubit>().currentUser;
+    final firstName = (user?.name ?? '').split(' ').first;
+    final userName = firstName.isNotEmpty ? firstName : 'Bienvenido';
+    final isPremium = user?.plan == UserPlan.premium;
+    final solicitationsUsed = user?.solicitationsThisMonth ?? 0;
+
     final hour = DateTime.now().hour;
     final greeting = hour < 12
         ? 'Buenos días'
@@ -72,292 +67,324 @@ class _HomePageState extends State<HomePage> {
             ? 'Buenas tardes'
             : 'Buenas noches';
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        automaticallyImplyLeading: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$greeting, $_userName',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.greyDark,
-              ),
-            ),
-            const Text(
-              'Juris Honoris',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.greyMedium,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-          ],
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<CasesCubit, CasesState>(
+          listener: (_, state) {
+            if (state is CasesLoaded) setState(() => _cases = state.cases);
+          },
         ),
-        actions: [
-          Stack(
+        BlocListener<LawyersCubit, LawyersState>(
+          listener: (_, state) {
+            if (state is LawyersLoaded) setState(() => _lawyers = state.lawyers);
+          },
+        ),
+      ],
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundColor,
+        appBar: AppBar(
+          backgroundColor: AppColors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          automaticallyImplyLeading: false,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.notifications_outlined,
+              Text(
+                '$greeting, $userName',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                   color: AppColors.greyDark,
-                  size: 26,
                 ),
-                onPressed: () {},
               ),
-              Positioned(
-                right: 10,
-                top: 10,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.errorRed,
-                    shape: BoxShape.circle,
-                  ),
+              const Text(
+                'Juris Honoris',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.greyMedium,
+                  fontWeight: FontWeight.normal,
                 ),
               ),
             ],
           ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.borderColor),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 80),
-        children: [
-          // Card de bienvenida azul
-          Container(
-            margin: const EdgeInsets.fromLTRB(
-              AppSizes.pagePadding,
-              AppSizes.lg,
-              AppSizes.pagePadding,
-              0,
-            ),
-            padding: const EdgeInsets.all(AppSizes.xl),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.primaryBlue, AppColors.primaryBlueDark],
-              ),
-              borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryBlue.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
+          actions: [
+            Stack(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '¿Necesitas ayuda legal?',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Consulta con nuestra IA legal gratuita',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Color(0xCCFFFFFF),
-                        ),
-                      ),
-                      const SizedBox(height: AppSizes.md),
-                      GestureDetector(
-                        onTap: () => context.go('/chat-ia'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSizes.lg,
-                            vertical: AppSizes.sm,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Consultar con IA',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryBlue,
-                                ),
-                              ),
-                              SizedBox(width: 4),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 14,
-                                color: AppColors.primaryBlue,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                IconButton(
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    color: AppColors.greyDark,
+                    size: 26,
+                  ),
+                  onPressed: () {},
+                ),
+                Positioned(
+                  right: 10,
+                  top: 10,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppColors.errorRed,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-                const SizedBox(width: AppSizes.md),
-                const Icon(
-                  Icons.gavel_rounded,
-                  size: 56,
-                  color: Color(0x40FFFFFF),
-                ),
               ],
             ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: AppColors.borderColor),
           ),
-
-          // Mi Plan
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSizes.pagePadding,
-              AppSizes.xl,
-              AppSizes.pagePadding,
-              0,
-            ),
-            child: _PlanSection(
-              isPremium: _isPremium,
-              used: _solicitationsUsed,
-              max: _solicitationsMax,
-              onUpgrade: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const UpgradePage()),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.only(bottom: 80),
+          children: [
+            // Card de bienvenida azul
+            Container(
+              margin: const EdgeInsets.fromLTRB(
+                AppSizes.pagePadding,
+                AppSizes.lg,
+                AppSizes.pagePadding,
+                0,
               ),
-            ),
-          ),
-
-          // Mis casos activos
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSizes.pagePadding,
-              AppSizes.xl,
-              AppSizes.pagePadding,
-              0,
-            ),
-            child: _SectionHeader(
-              title: 'Mis casos activos',
-              onVerTodo: () => _onTabChanged(3),
-            ),
-          ),
-          _ActiveCasesScroll(
-            tasks: mockTasks.where((t) => t.status != 'completed').toList(),
-            onTapTask: (task) => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => TaskDetailPage(task: task),
+              padding: const EdgeInsets.all(AppSizes.xl),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.primaryBlue, AppColors.primaryBlueDark],
+                ),
+                borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryBlue.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-            ),
-          ),
-
-          // Actividad reciente
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSizes.pagePadding,
-              AppSizes.xl,
-              AppSizes.pagePadding,
-              0,
-            ),
-            child: _SectionHeader(
-              title: 'Actividad reciente',
-              onVerTodo: () => _onTabChanged(2),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSizes.pagePadding,
-              AppSizes.sm,
-              AppSizes.pagePadding,
-              0,
-            ),
-            child: Column(
-              children: mockTasks
-                  .take(3)
-                  .map(
-                    (t) => _RecentActivityItem(
-                      task: t,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => TaskDetailPage(task: t),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '¿Necesitas ayuda legal?',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Consulta con nuestra IA legal gratuita',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xCCFFFFFF),
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                        GestureDetector(
+                          onTap: () => context.go('/chat-ia'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSizes.lg,
+                              vertical: AppSizes.sm,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Consultar con IA',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryBlue,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 14,
+                                  color: AppColors.primaryBlue,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  )
-                  .toList(),
+                  ),
+                  const SizedBox(width: AppSizes.md),
+                  const Icon(
+                    Icons.gavel_rounded,
+                    size: 56,
+                    color: Color(0x40FFFFFF),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Abogados destacados
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSizes.pagePadding,
-              AppSizes.xl,
-              AppSizes.pagePadding,
-              0,
-            ),
-            child: _SectionHeader(
-              title: 'Abogados destacados',
-              onVerTodo: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const LawyerDirectoryPage(),
+            // Mi Plan
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.pagePadding,
+                AppSizes.xl,
+                AppSizes.pagePadding,
+                0,
+              ),
+              child: _PlanSection(
+                isPremium: isPremium,
+                used: solicitationsUsed,
+                max: 3,
+                onUpgrade: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const UpgradePage()),
                 ),
               ),
             ),
-          ),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
+
+            // Mis casos activos
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.pagePadding,
+                AppSizes.xl,
+                AppSizes.pagePadding,
+                0,
+              ),
+              child: _SectionHeader(
+                title: 'Mis casos activos',
+                onVerTodo: () => context.go('/dossier'),
+              ),
+            ),
+            _ActiveCasesScroll(
+              tasks: _cases.where((t) => t.status != 'completed').toList(),
+              onTapTask: (task) => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TaskDetailPage(task: task),
+                ),
+              ),
+            ),
+
+            // Actividad reciente
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.pagePadding,
+                AppSizes.xl,
+                AppSizes.pagePadding,
+                0,
+              ),
+              child: _SectionHeader(
+                title: 'Actividad reciente',
+                onVerTodo: () => context.go('/tasks'),
+              ),
+            ),
+            Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSizes.pagePadding,
                 AppSizes.sm,
                 AppSizes.pagePadding,
-                AppSizes.sm,
+                0,
               ),
-              itemCount: mockLawyers.length,
-              itemBuilder: (_, i) {
-                final lawyer = mockLawyers[i];
-                return LawyerCard(
-                  lawyer: lawyer,
-                  compact: true,
-                  onVerPerfil: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => LawyerProfilePage(lawyer: lawyer),
+              child: _cases.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppSizes.md),
+                      child: Text(
+                        'Sin actividad reciente',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.greyMedium,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    )
+                  : Column(
+                      children: _cases
+                          .take(3)
+                          .map(
+                            (t) => _RecentActivityItem(
+                              task: t,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TaskDetailPage(task: t),
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
                     ),
-                  ),
-                );
-              },
             ),
-          ),
 
-          const SizedBox(height: AppSizes.lg),
-        ],
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentTab,
-        onTabChanged: _onTabChanged,
+            // Abogados destacados
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.pagePadding,
+                AppSizes.xl,
+                AppSizes.pagePadding,
+                0,
+              ),
+              child: _SectionHeader(
+                title: 'Abogados destacados',
+                onVerTodo: () => context.go('/lawyers'),
+              ),
+            ),
+            SizedBox(
+              height: 200,
+              child: _lawyers.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Cargando abogados...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.greyMedium,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSizes.pagePadding,
+                        AppSizes.sm,
+                        AppSizes.pagePadding,
+                        AppSizes.sm,
+                      ),
+                      itemCount: _lawyers.length,
+                      itemBuilder: (_, i) {
+                        final lawyer = _lawyers[i];
+                        return LawyerCard(
+                          lawyer: lawyer,
+                          compact: true,
+                          onVerPerfil: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => LawyerProfilePage(lawyer: lawyer),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+
+            const SizedBox(height: AppSizes.lg),
+          ],
+        ),
+        bottomNavigationBar: BottomNavBar(
+          currentIndex: _currentTab,
+          onTabChanged: _onTabChanged,
+        ),
       ),
     );
   }
@@ -442,7 +469,7 @@ class _PlanSection extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: used / max,
+                    value: max > 0 ? used / max : 0,
                     backgroundColor: AppColors.greyLight,
                     color: used >= max
                         ? AppColors.errorRed

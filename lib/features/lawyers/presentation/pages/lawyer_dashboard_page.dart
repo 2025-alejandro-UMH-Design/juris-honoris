@@ -89,8 +89,7 @@ class _LawyerBottomNav extends StatelessWidget {
   final int selectedIndex;
   final void Function(int) onTap;
 
-  const _LawyerBottomNav(
-      {required this.selectedIndex, required this.onTap});
+  const _LawyerBottomNav({required this.selectedIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -146,13 +145,13 @@ class _DashboardHome extends StatelessWidget {
               fontWeight: FontWeight.bold,
               fontSize: 18),
         ),
-        actions: [
+        actions: const [
           Padding(
-            padding: const EdgeInsets.only(right: AppSizes.md),
+            padding: EdgeInsets.only(right: AppSizes.md),
             child: CircleAvatar(
               backgroundColor: AppColors.primaryBlue,
               radius: 18,
-              child: const Text(
+              child: Text(
                 'CM',
                 style: TextStyle(
                     color: AppColors.white,
@@ -196,8 +195,8 @@ class _DashboardHome extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSizes.sm),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.errorRed,
                     borderRadius: BorderRadius.circular(10),
@@ -229,13 +228,13 @@ class _DashboardHome extends StatelessWidget {
                   color: AppColors.greyDark),
             ),
             const SizedBox(height: AppSizes.sm),
-            _ActiveCaseTile(
+            const _ActiveCaseTile(
               title: 'Divorcio por mutuo acuerdo',
               client: 'Juan G.',
               status: 'En negociación',
               progress: 0.45,
             ),
-            _ActiveCaseTile(
+            const _ActiveCaseTile(
               title: 'Demanda por despido',
               client: 'María L.',
               status: 'Documentación',
@@ -306,11 +305,11 @@ class _WelcomeCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppSizes.sm),
             decoration: BoxDecoration(
-              color: AppColors.white.withOpacity(0.15),
+              color: AppColors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.card_giftcard, color: AppColors.white, size: 16),
                 SizedBox(width: AppSizes.sm),
                 Text(
@@ -462,7 +461,7 @@ class _CaseListTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: AppSizes.sm, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.1),
+                  color: AppColors.primaryBlue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -547,7 +546,7 @@ class _ActiveCaseTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: AppSizes.sm, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryOrange.withOpacity(0.1),
+                  color: AppColors.secondaryOrange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -563,8 +562,7 @@ class _ActiveCaseTile extends StatelessWidget {
           const SizedBox(height: AppSizes.xs),
           Text(
             'Cliente: $client',
-            style: const TextStyle(
-                fontSize: 12, color: AppColors.subtitleGrey),
+            style: const TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
           ),
           const SizedBox(height: AppSizes.sm),
           ClipRRect(
@@ -580,8 +578,7 @@ class _ActiveCaseTile extends StatelessWidget {
           const SizedBox(height: AppSizes.xs),
           Text(
             '${(progress * 100).toStringAsFixed(0)}% completado',
-            style: const TextStyle(
-                fontSize: 11, color: AppColors.subtitleGrey),
+            style: const TextStyle(fontSize: 11, color: AppColors.subtitleGrey),
           ),
         ],
       ),
@@ -596,8 +593,7 @@ class _UrgencyBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 2),
       decoration: BoxDecoration(
         color: isUrgent ? AppColors.errorRed : AppColors.greyLight,
         borderRadius: BorderRadius.circular(4),
@@ -613,4 +609,3 @@ class _UrgencyBadge extends StatelessWidget {
     );
   }
 }
-

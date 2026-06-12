@@ -86,6 +86,7 @@ void goNavBottom(BuildContext context, int index) {
     case 1: context.go('/chat-ia');
     case 2: context.go('/tasks');
     case 3: context.go('/dossier');
+    case 4: context.go('/profile');
   }
 }
 
@@ -128,13 +129,22 @@ GoRouter createRouter(AuthCubit authCubit) {
       // ── Client shell ────────────────────────────────────────────────────
       GoRoute(
         path: Routes.home,
-        builder: (context, state) => const HomePage(),
+        builder: (context, state) => MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => sl<CasesCubit>()),
+            BlocProvider(create: (_) => sl<LawyersCubit>()),
+          ],
+          child: const HomePage(),
+        ),
       ),
       GoRoute(
         path: Routes.dossier,
-        builder: (context, state) => DossierPage(
-          currentNavIndex: 3,
-          onNavChanged: (i) => goNavBottom(context, i),
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<CasesCubit>(),
+          child: DossierPage(
+            currentNavIndex: 3,
+            onNavChanged: (i) => goNavBottom(context, i),
+          ),
         ),
       ),
       GoRoute(
@@ -148,9 +158,12 @@ GoRouter createRouter(AuthCubit authCubit) {
         path: Routes.aiResult,
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
-          return AIResultPage(
-            consultaSummary: extra['summary'] as String? ?? '',
-            needsLawyer: extra['needsLawyer'] as bool? ?? false,
+          return BlocProvider(
+            create: (_) => sl<CasesCubit>(),
+            child: AIResultPage(
+              consultaSummary: extra['summary'] as String? ?? '',
+              needsLawyer: extra['needsLawyer'] as bool? ?? false,
+            ),
           );
         },
       ),
@@ -178,7 +191,10 @@ GoRouter createRouter(AuthCubit authCubit) {
           final id = state.pathParameters['id'] ?? '';
           final lawyer = (state.extra as LawyerData?) ??
               LawyerData(id: id, name: '', specialization: '', rating: 0, cases: 0, verified: false, city: '', about: '');
-          return LawyerRequestPage(lawyer: lawyer);
+          return BlocProvider(
+            create: (_) => sl<LawyersCubit>(),
+            child: LawyerRequestPage(lawyer: lawyer),
+          );
         },
       ),
 
@@ -211,6 +227,7 @@ GoRouter createRouter(AuthCubit authCubit) {
       GoRoute(
         path: Routes.profile,
         builder: (context, state) => ProfilePage(
+          currentNavIndex: 4,
           onNavChanged: (i) => goNavBottom(context, i),
         ),
       ),

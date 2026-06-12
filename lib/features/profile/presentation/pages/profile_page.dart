@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/bottom_nav_bar.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import 'upgrade_page.dart';
 import 'verify_identity_page.dart';
 
@@ -9,40 +12,28 @@ class ProfilePage extends StatelessWidget {
   final int currentNavIndex;
   final void Function(int) onNavChanged;
 
-  // Datos mock del usuario
-  final String userName;
-  final String userEmail;
-  final bool isPremium;
-  final bool isVerified;
-  final String? dni;
-  final String? phone;
-  final int solicitationsUsed;
-  final String? premiumExpiry;
-
   const ProfilePage({
     super.key,
     this.currentNavIndex = 0,
     required this.onNavChanged,
-    this.userName = 'Ana López',
-    this.userEmail = 'ana.lopez@email.com',
-    this.isPremium = false,
-    this.isVerified = true,
-    this.dni = '0801-1990-12345',
-    this.phone = '+504 9876-5432',
-    this.solicitationsUsed = 1,
-    this.premiumExpiry,
   });
-
-  String get _initials {
-    final parts = userName.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
-  }
 
   @override
   Widget build(BuildContext context) {
+    final user = context.read<AuthCubit>().currentUser;
+    final userName = user?.name ?? user?.email.split('@').first ?? 'Usuario';
+    final userEmail = user?.email ?? '';
+    final isPremium = user?.plan == UserPlan.premium;
+    final isVerified = user?.isVerified ?? false;
+    final dni = user?.dni;
+    final phone = user?.phone;
+    final solicitationsUsed = user?.solicitationsThisMonth ?? 0;
+
+    final parts = userName.trim().split(' ');
+    final initials = parts.length >= 2
+        ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
+        : parts[0][0].toUpperCase();
+
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
@@ -81,12 +72,12 @@ class ProfilePage extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryBlue.withOpacity(0.12),
+                      color: AppColors.primaryBlue.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      _initials,
+                      initials,
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -127,7 +118,7 @@ class ProfilePage extends StatelessWidget {
                   icon: Icons.badge_outlined,
                   label: 'DNI',
                   value: dni ?? '',
-                  isEmpty: dni == null || dni!.isEmpty,
+                  isEmpty: dni == null || dni.isEmpty,
                   onComplete: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -135,12 +126,13 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Divider(height: AppSizes.xl, color: AppColors.borderColor),
+                const Divider(
+                    height: AppSizes.xl, color: AppColors.borderColor),
                 _DataRow(
                   icon: Icons.phone_outlined,
                   label: 'Teléfono',
                   value: phone ?? '',
-                  isEmpty: phone == null || phone!.isEmpty,
+                  isEmpty: phone == null || phone.isEmpty,
                   onComplete: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -148,7 +140,8 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Divider(height: AppSizes.xl, color: AppColors.borderColor),
+                const Divider(
+                    height: AppSizes.xl, color: AppColors.borderColor),
                 _DataRow(
                   icon: Icons.email_outlined,
                   label: 'Correo',
@@ -165,19 +158,19 @@ class ProfilePage extends StatelessWidget {
               title: 'Mi suscripción',
               children: isPremium
                   ? [
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.star_rounded,
                             color: AppColors.secondaryOrange,
                             size: 20,
                           ),
-                          const SizedBox(width: AppSizes.sm),
+                          SizedBox(width: AppSizes.sm),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Plan Premium activo',
                                   style: TextStyle(
                                     fontSize: 15,
@@ -185,14 +178,6 @@ class ProfilePage extends StatelessWidget {
                                     color: AppColors.greyDark,
                                   ),
                                 ),
-                                if (premiumExpiry != null)
-                                  Text(
-                                    'Hasta $premiumExpiry',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.greyMedium,
-                                    ),
-                                  ),
                               ],
                             ),
                           ),
@@ -269,7 +254,8 @@ class ProfilePage extends StatelessWidget {
                                 AppColors.primaryBlueDark,
                               ],
                             ),
-                            borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+                            borderRadius:
+                                BorderRadius.circular(AppSizes.buttonRadius),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -339,7 +325,7 @@ class ProfilePage extends StatelessWidget {
                   color: const Color(0xFFFFEBEE),
                   borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
                   border: Border.all(
-                    color: AppColors.errorRed.withOpacity(0.3),
+                    color: AppColors.errorRed.withValues(alpha: 0.3),
                   ),
                 ),
                 child: const Row(
@@ -399,11 +385,9 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Sesión cerrada')),
-              );
+              await context.read<AuthCubit>().logout();
             },
             child: const Text(
               'Cerrar sesión',
@@ -430,8 +414,8 @@ class _PlanBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: 4),
       decoration: BoxDecoration(
         color: isPremium
-            ? AppColors.primaryBlue.withOpacity(0.12)
-            : AppColors.secondaryOrange.withOpacity(0.12),
+            ? AppColors.primaryBlue.withValues(alpha: 0.12)
+            : AppColors.secondaryOrange.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -440,7 +424,8 @@ class _PlanBadge extends StatelessWidget {
           Icon(
             isPremium ? Icons.star_rounded : Icons.person_outline_rounded,
             size: 14,
-            color: isPremium ? AppColors.primaryBlue : AppColors.secondaryOrange,
+            color:
+                isPremium ? AppColors.primaryBlue : AppColors.secondaryOrange,
           ),
           const SizedBox(width: 4),
           Text(
@@ -448,7 +433,8 @@ class _PlanBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: isPremium ? AppColors.primaryBlue : AppColors.secondaryOrange,
+              color:
+                  isPremium ? AppColors.primaryBlue : AppColors.secondaryOrange,
             ),
           ),
         ],

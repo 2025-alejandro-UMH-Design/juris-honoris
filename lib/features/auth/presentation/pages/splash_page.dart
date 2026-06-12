@@ -89,7 +89,7 @@ class _SplashPageState extends State<SplashPage>
                   Text(
                     'Tu asistente legal con IA',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                       fontSize: 16,
                     ),
                   ),

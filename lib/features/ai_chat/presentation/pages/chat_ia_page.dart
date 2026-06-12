@@ -11,6 +11,9 @@ import 'package:juris_honoris/features/ai_chat/presentation/widgets/ai_message_b
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:juris_honoris/shared/widgets/bottom_nav_bar.dart';
 
+import 'package:juris_honoris/injection_container.dart';
+import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
+
 import 'ai_result_page.dart';
 
 class ChatIAPage extends StatefulWidget {
@@ -274,9 +277,12 @@ class _ChatIAPageState extends State<ChatIAPage> {
   }) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => AIResultPage(
-          consultaSummary: summary,
-          needsLawyer: needsLawyer,
+        builder: (_) => BlocProvider(
+          create: (_) => sl<CasesCubit>(),
+          child: AIResultPage(
+            consultaSummary: summary,
+            needsLawyer: needsLawyer,
+          ),
         ),
       ),
     );

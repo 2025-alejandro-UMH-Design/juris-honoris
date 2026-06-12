@@ -7,17 +7,20 @@ import 'package:juris_honoris/shared/widgets/message_bubble.dart';
 
 final _initialMessages = [
   _ChatMessage(
-    text: 'Hola Doctor, gracias por aceptar mi caso. Tengo varias dudas sobre el proceso.',
+    text:
+        'Hola Doctor, gracias por aceptar mi caso. Tengo varias dudas sobre el proceso.',
     isLawyer: false,
     timestamp: DateTime(2026, 5, 27, 9, 15),
   ),
   _ChatMessage(
-    text: 'Buenos días. Con gusto lo ayudo. ¿Cuál es su principal preocupación en este momento?',
+    text:
+        'Buenos días. Con gusto lo ayudo. ¿Cuál es su principal preocupación en este momento?',
     isLawyer: true,
     timestamp: DateTime(2026, 5, 27, 9, 18),
   ),
   _ChatMessage(
-    text: 'Principalmente la custodia de mis hijos. ¿Cómo funciona el proceso en Honduras?',
+    text:
+        'Principalmente la custodia de mis hijos. ¿Cómo funciona el proceso en Honduras?',
     isLawyer: false,
     timestamp: DateTime(2026, 5, 27, 9, 20),
   ),
@@ -162,8 +165,8 @@ class _LawyerChatPageState extends State<LawyerChatPage> {
             ),
             Text(
               'Caso: ${widget.caseType}',
-              style: const TextStyle(
-                  color: AppColors.subtitleGrey, fontSize: 11),
+              style:
+                  const TextStyle(color: AppColors.subtitleGrey, fontSize: 11),
             ),
           ],
         ),
@@ -189,12 +192,12 @@ class _LawyerChatPageState extends State<LawyerChatPage> {
           // ── Confidentiality banner ──────────────────────────────
           Container(
             width: double.infinity,
-            color: AppColors.primaryBlue.withOpacity(0.05),
+            color: AppColors.primaryBlue.withValues(alpha: 0.05),
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSizes.lg, vertical: AppSizes.sm),
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Icon(Icons.lock_outline,
                     size: 12, color: AppColors.primaryBlue),
                 SizedBox(width: 4),
@@ -215,8 +218,7 @@ class _LawyerChatPageState extends State<LawyerChatPage> {
               controller: _scrollController,
               padding: const EdgeInsets.all(AppSizes.pagePadding),
               itemCount: _messages.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: AppSizes.sm),
+              separatorBuilder: (_, __) => const SizedBox(height: AppSizes.sm),
               itemBuilder: (_, i) {
                 final msg = _messages[i];
                 return MessageBubble(
@@ -230,11 +232,10 @@ class _LawyerChatPageState extends State<LawyerChatPage> {
 
           // ── Input bar ──────────────────────────────────────────
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.white,
-              border: const Border(
-                  top: BorderSide(color: AppColors.borderColor)),
-              boxShadow: const [
+              border: Border(top: BorderSide(color: AppColors.borderColor)),
+              boxShadow: [
                 BoxShadow(
                     color: Color(0x0A000000),
                     blurRadius: 4,

@@ -6,7 +6,14 @@ import '../../../../shared/widgets/app_input_field.dart';
 import 'tasks_page.dart';
 
 class CreateTaskPage extends StatefulWidget {
-  const CreateTaskPage({super.key});
+  final String? initialTitle;
+  final String? initialDescription;
+
+  const CreateTaskPage({
+    super.key,
+    this.initialTitle,
+    this.initialDescription,
+  });
 
   @override
   State<CreateTaskPage> createState() => _CreateTaskPageState();
@@ -23,6 +30,17 @@ class _CreateTaskPageState extends State<CreateTaskPage> {
 
   final _categories = ['Familia', 'Laboral', 'Penal', 'Mercantil', 'Otro'];
   final _priorities = ['Baja', 'Media', 'Alta'];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTitle != null) {
+      _titleController.text = widget.initialTitle!;
+    }
+    if (widget.initialDescription != null) {
+      _descController.text = widget.initialDescription!;
+    }
+  }
 
   @override
   void dispose() {

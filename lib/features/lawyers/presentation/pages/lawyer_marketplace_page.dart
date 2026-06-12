@@ -60,8 +60,7 @@ class LawyerMarketplacePage extends StatefulWidget {
   const LawyerMarketplacePage({super.key});
 
   @override
-  State<LawyerMarketplacePage> createState() =>
-      _LawyerMarketplacePageState();
+  State<LawyerMarketplacePage> createState() => _LawyerMarketplacePageState();
 }
 
 class _LawyerMarketplacePageState extends State<LawyerMarketplacePage> {
@@ -109,8 +108,7 @@ class _LawyerMarketplacePageState extends State<LawyerMarketplacePage> {
             icon: const Icon(Icons.filter_list, color: AppColors.primaryBlue),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Filtros avanzados próximamente')),
+                const SnackBar(content: Text('Filtros avanzados próximamente')),
               );
             },
           ),
@@ -122,21 +120,17 @@ class _LawyerMarketplacePageState extends State<LawyerMarketplacePage> {
           Container(
             color: AppColors.white,
             padding: const EdgeInsets.fromLTRB(
-                AppSizes.pagePadding,
-                0,
-                AppSizes.pagePadding,
-                AppSizes.md),
+                AppSizes.pagePadding, 0, AppSizes.pagePadding, AppSizes.md),
             child: TextField(
               controller: _searchController,
               onChanged: (v) => setState(() => _searchQuery = v),
-              style: const TextStyle(
-                  fontSize: 14, color: AppColors.greyDark),
+              style: const TextStyle(fontSize: 14, color: AppColors.greyDark),
               decoration: InputDecoration(
                 hintText: 'Buscar casos...',
-                hintStyle: const TextStyle(
-                    color: AppColors.hintGrey, fontSize: 14),
-                prefixIcon: const Icon(Icons.search,
-                    color: AppColors.greyMedium),
+                hintStyle:
+                    const TextStyle(color: AppColors.hintGrey, fontSize: 14),
+                prefixIcon:
+                    const Icon(Icons.search, color: AppColors.greyMedium),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear,
@@ -177,8 +171,7 @@ class _LawyerMarketplacePageState extends State<LawyerMarketplacePage> {
               padding: const EdgeInsets.symmetric(
                   horizontal: AppSizes.pagePadding, vertical: 6),
               itemCount: _filterOptions.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(width: AppSizes.sm),
+              separatorBuilder: (_, __) => const SizedBox(width: AppSizes.sm),
               itemBuilder: (_, i) {
                 final opt = _filterOptions[i];
                 final selected = _selectedFilter == opt;
@@ -203,12 +196,9 @@ class _LawyerMarketplacePageState extends State<LawyerMarketplacePage> {
                       opt,
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: selected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: selected
-                            ? AppColors.white
-                            : AppColors.greyDark,
+                        fontWeight:
+                            selected ? FontWeight.bold : FontWeight.normal,
+                        color: selected ? AppColors.white : AppColors.greyDark,
                       ),
                     ),
                   ),
@@ -332,8 +322,8 @@ class _CaseCard extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                textStyle: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600),
+                textStyle:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -350,10 +340,9 @@ class _TypeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.primaryBlue.withOpacity(0.1),
+        color: AppColors.primaryBlue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -374,8 +363,7 @@ class _UrgencyBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 2),
       decoration: BoxDecoration(
         color: isUrgent ? AppColors.errorRed : AppColors.greyLight,
         borderRadius: BorderRadius.circular(4),
@@ -396,12 +384,11 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.search_off_outlined,
-              size: 56, color: AppColors.greyLight),
+        children: [
+          Icon(Icons.search_off_outlined, size: 56, color: AppColors.greyLight),
           SizedBox(height: AppSizes.md),
           Text(
             'No se encontraron casos',

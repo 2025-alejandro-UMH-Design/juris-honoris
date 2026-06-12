@@ -38,6 +38,11 @@ class BottomNavBar extends StatelessWidget {
       activeIcon: Icons.folder_special_rounded,
       label: AppStrings.navDossier,
     ),
+    _NavItem(
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: AppStrings.navPerfil,
+    ),
   ];
 
   @override
