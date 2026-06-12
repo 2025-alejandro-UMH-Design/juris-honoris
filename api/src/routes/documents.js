@@ -1,13 +1,20 @@
-const router = require('express').Router({ mergeParams: true });
-const path   = require('path');
-const fs     = require('fs');
-const db     = require('../db');
-const { requireAuth }   = require('../middleware/auth');
-const { uploadCase }    = require('../middleware/upload');
+const router     = require('express').Router({ mergeParams: true });
+const db         = require('../db');
+const cloudinary = require('../cloudinary');
+const { requireAuth } = require('../middleware/auth');
+const { uploadCase }  = require('../middleware/upload');
+
+function uploadToCloudinary(buffer, folder, resourceType) {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      { folder, resource_type: resourceType, use_filename: false },
+      (err, result) => (err ? reject(err) : resolve(result))
+    ).end(buffer);
+  });
+}
 
 // GET /api/cases/:caseId/documents
 router.get('/', requireAuth, async (req, res) => {
-  // Verifica que el caso pertenezca al usuario o sea su abogado
   const caseRow = await db.query(
     'select client_id, lawyer_id from cases where id = $1',
     [req.params.caseId]
@@ -30,7 +37,7 @@ router.get('/', requireAuth, async (req, res) => {
   res.json(rows);
 });
 
-// POST /api/cases/:caseId/documents  — subir archivo
+// POST /api/cases/:caseId/documents  — subir archivo a Cloudinary
 router.post('/', requireAuth, uploadCase.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Archivo requerido' });
 
@@ -40,45 +47,46 @@ router.post('/', requireAuth, uploadCase.single('file'), async (req, res) => {
     return res.status(403).json({ error: 'Sin acceso a este caso' });
   }
 
-  const relativePath = `uploads/cases/${req.params.caseId}/${req.file.filename}`;
+  try {
+    const isPdf = req.file.mimetype === 'application/pdf' ||
+                  req.file.mimetype.includes('word');
+    const resourceType = isPdf ? 'raw' : 'image';
+    const folder = `juris-honoris/cases/${req.params.caseId}`;
 
-  const { rows } = await db.query(
-    `insert into case_documents (case_id, uploaded_by, name, file_path, file_type, file_size_bytes)
-     values ($1, $2, $3, $4, $5, $6) returning *`,
-    [
-      req.params.caseId,
-      req.user.id,
-      req.body.name || req.file.originalname,
-      relativePath,
-      req.file.mimetype,
-      req.file.size,
-    ]
-  );
-  res.status(201).json(rows[0]);
+    const result = await uploadToCloudinary(req.file.buffer, folder, resourceType);
+
+    const { rows } = await db.query(
+      `insert into case_documents (case_id, uploaded_by, name, file_path, file_type, file_size_bytes)
+       values ($1, $2, $3, $4, $5, $6) returning *`,
+      [
+        req.params.caseId,
+        req.user.id,
+        req.body.name || req.file.originalname,
+        result.secure_url,
+        req.file.mimetype,
+        req.file.size,
+      ]
+    );
+    res.status(201).json(rows[0]);
+  } catch (e) {
+    res.status(500).json({ error: 'Error al subir el archivo: ' + e.message });
+  }
 });
 
-// GET /api/cases/:caseId/documents/:docId/download
+// GET /api/cases/:caseId/documents/:docId/download  — redirige a URL de Cloudinary
 router.get('/:docId/download', requireAuth, async (req, res) => {
   const { rows } = await db.query(
-    `select cd.*, c.client_id, c.lawyer_id
+    `select cd.file_path, c.client_id, c.lawyer_id
      from case_documents cd
      join cases c on c.id = cd.case_id
      where cd.id = $1 and cd.case_id = $2`,
     [req.params.docId, req.params.caseId]
   );
   if (!rows[0]) return res.status(404).json({ error: 'Documento no encontrado' });
-
-  const doc = rows[0];
-  if (req.user.id !== doc.client_id && req.user.id !== doc.lawyer_id) {
+  if (req.user.id !== rows[0].client_id && req.user.id !== rows[0].lawyer_id) {
     return res.status(403).json({ error: 'Sin acceso a este documento' });
   }
-
-  const absPath = path.join(__dirname, '../../', doc.file_path);
-  if (!fs.existsSync(absPath)) {
-    return res.status(404).json({ error: 'Archivo no encontrado en disco' });
-  }
-
-  res.download(absPath, doc.name);
+  res.redirect(rows[0].file_path);
 });
 
 // DELETE /api/cases/:caseId/documents/:docId
@@ -97,8 +105,17 @@ router.delete('/:docId', requireAuth, async (req, res) => {
 
   await db.query('delete from case_documents where id = $1', [req.params.docId]);
 
-  const absPath = path.join(__dirname, '../../', rows[0].file_path);
-  if (fs.existsSync(absPath)) fs.unlinkSync(absPath);
+  // Intenta eliminar de Cloudinary (best-effort)
+  try {
+    const url = rows[0].file_path;
+    const m = url.match(/\/upload\/(?:v\d+\/)?(.+?)(\.[^./]+)?$/);
+    if (m) {
+      const publicId = m[1];
+      await cloudinary.uploader.destroy(publicId, { resource_type: 'image' }).catch(() =>
+        cloudinary.uploader.destroy(publicId, { resource_type: 'raw' })
+      );
+    }
+  } catch (_) { /* non-critical */ }
 
   res.json({ message: 'Documento eliminado' });
 });

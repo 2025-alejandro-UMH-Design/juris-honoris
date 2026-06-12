@@ -52,6 +52,10 @@ dependencies:
   # Google Sign-In
   google_sign_in: ^6.2.2
 
+  # Document Storage (cámara, galería, PDF)
+  image_picker: ^1.1.2
+  file_picker: ^8.1.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

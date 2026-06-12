@@ -9,6 +9,7 @@ import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.d
 import 'package:juris_honoris/features/chat/bloc/chat_cubit.dart';
 import 'package:juris_honoris/features/lawyers/presentation/bloc/lawyers_cubit.dart';
 import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
+import 'package:juris_honoris/features/tasks/presentation/bloc/documents_cubit.dart';
 
 // Auth
 import 'package:juris_honoris/features/auth/presentation/pages/splash_page.dart';
@@ -219,7 +220,10 @@ GoRouter createRouter(AuthCubit authCubit) {
           final id = state.pathParameters['id'] ?? '';
           final task = (state.extra as TaskData?) ??
               TaskData(id: id, title: '', description: '', status: 'pending', category: 'other', priority: 'medium', dueDate: '');
-          return TaskDetailPage(task: task);
+          return BlocProvider(
+            create: (_) => sl<DocumentsCubit>(),
+            child: TaskDetailPage(task: task),
+          );
         },
       ),
 
