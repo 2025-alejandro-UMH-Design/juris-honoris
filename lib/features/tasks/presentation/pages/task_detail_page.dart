@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -102,17 +101,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                 _pickImage(ImageSource.gallery);
               },
             ),
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFFFF3E0),
-                child: Icon(Icons.picture_as_pdf_outlined, color: Color(0xFFE65100)),
-              ),
-              title: const Text('Seleccionar PDF'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickPdf();
-              },
-            ),
             const SizedBox(height: AppSizes.md),
           ],
         ),
@@ -128,18 +116,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     );
     if (file == null || !mounted) return;
     await _upload(file.path, 'image/jpeg', file.name);
-  }
-
-  Future<void> _pickPdf() async {
-    final result = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-      withData: false,
-    );
-    if (result == null || result.files.isEmpty || !mounted) return;
-    final f = result.files.first;
-    if (f.path == null) return;
-    await _upload(f.path!, 'application/pdf', f.name);
   }
 
   Future<void> _upload(String path, String mime, String name) async {
