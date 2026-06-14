@@ -74,6 +74,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
   }
 
   void _clearChat(BuildContext context) {
+    final cubit = context.read<ChatIACubit>();
     showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -97,7 +98,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
       ),
     ).then((confirmed) {
       if (confirmed == true && mounted) {
-        context.read<ChatIACubit>().clearChat();
+        cubit.clearChat();
       }
     });
   }
