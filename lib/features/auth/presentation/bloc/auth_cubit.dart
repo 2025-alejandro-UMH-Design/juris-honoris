@@ -105,12 +105,15 @@ class AuthCubit extends Cubit<AuthState> {
       final googleSignIn = GoogleSignIn(serverClientId: _webClientId);
       final account = await googleSignIn.signIn();
       if (account == null) {
-        emit(const AuthUnauthenticated());
+        emit(const AuthError('Inicio con Google cancelado o fallido'));
         return;
       }
       final auth = await account.authentication;
       final idToken = auth.idToken;
-      if (idToken == null) throw Exception('No se pudo obtener token de Google');
+      if (idToken == null) {
+        emit(const AuthError('Google no devolvió un token válido. Verifica la configuración OAuth.'));
+        return;
+      }
 
       final res = await _dio.post(
         '${ApiConfig.auth}/google',
@@ -124,8 +127,8 @@ class AuthCubit extends Cubit<AuthState> {
     } on DioException catch (e) {
       final msg = e.response?.data?['error'] ?? 'Error al iniciar con Google';
       emit(AuthError(msg.toString()));
-    } catch (_) {
-      emit(const AuthError('Error al iniciar sesión con Google'));
+    } catch (e) {
+      emit(AuthError('Error Google Sign-In: ${e.toString()}'));
     }
   }
 
