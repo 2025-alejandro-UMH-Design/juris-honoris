@@ -28,7 +28,7 @@ router.get('/stats', ...guard, async (req, res) => {
 router.get('/users', ...guard, async (req, res) => {
   const { role, search } = req.query;
   let sql = `select id, email, full_name, phone, dni,
-                    role, plan, is_verified,
+                    role, plan, is_verified, auth_provider,
                     solicitations_this_month, created_at, updated_at
              from users where 1=1`;
   const params = [];
@@ -45,7 +45,7 @@ router.get('/users', ...guard, async (req, res) => {
 router.get('/users/:id', ...guard, async (req, res) => {
   const { rows } = await db.query(
     `select id, email, full_name, phone, dni,
-            role, plan, is_verified,
+            role, plan, is_verified, auth_provider,
             solicitations_this_month, created_at, updated_at
      from users where id = $1`,
     [req.params.id]
@@ -176,6 +176,31 @@ router.delete('/users/:id', ...guard, async (req, res) => {
   const { rowCount } = await db.query('delete from users where id = $1', [req.params.id]);
   if (!rowCount) return res.status(404).json({ error: 'Usuario no encontrado' });
   res.json({ message: 'Usuario eliminado' });
+});
+
+// GET /api/admin/requests  — todas las solicitudes cliente-abogado
+router.get('/requests', ...guard, async (req, res) => {
+  const { status } = req.query;
+  let sql = `
+    select lr.id, lr.case_type, lr.urgency, lr.description,
+           lr.status, lr.created_at, lr.responded_at, lr.rejection_reason,
+           uc.full_name as client_name, uc.email as client_email,
+           ul.full_name as lawyer_name, ul.email as lawyer_email,
+           c.title as case_title
+    from lawyer_requests lr
+    join users uc on uc.id = lr.client_id
+    join users ul on ul.id = lr.lawyer_id
+    left join cases c on c.id = lr.case_id
+    where 1=1
+  `;
+  const params = [];
+  if (status && status !== 'all') {
+    params.push(status);
+    sql += ` and lr.status = $${params.length}`;
+  }
+  sql += ' order by lr.created_at desc limit 200';
+  const { rows } = await db.query(sql, params);
+  res.json(rows);
 });
 
 // GET /api/admin/db-status  — estado de ambas DBs

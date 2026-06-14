@@ -65,15 +65,19 @@ app.use((err, _req, res, _next) => {
 
 // ── Arranque ──────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-// Escucha en 0.0.0.0 para ser accesible desde dispositivos móviles en la misma red
 app.listen(PORT, '0.0.0.0', async () => {
   try {
     await db.query('select 1');
+    // Migración incremental: columna auth_provider
+    await db.query(`
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(20) NOT NULL DEFAULT 'email'
+    `);
     console.log(`✓ Juris Honoris API corriendo`);
     console.log(`  Local:    http://localhost:${PORT}/api/health`);
     console.log(`  Red:      http://192.168.1.94:${PORT}/api/health  ← usar en el celular`);
     console.log(`  Emulador: http://10.0.2.2:${PORT}/api/health`);
-    console.log(`✓ Base de datos conectada (${process.env.DB_NAME})`);
+    console.log(`✓ Base de datos conectada`);
   } catch (err) {
     console.error('✗ Error de conexión a la base de datos:', err.message);
     console.error('  Verifica las variables en .env');

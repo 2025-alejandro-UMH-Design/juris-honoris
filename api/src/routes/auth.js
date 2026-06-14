@@ -47,8 +47,8 @@ router.post('/register', async (req, res) => {
 
   const hash = await bcrypt.hash(password, 10);
   const { rows } = await db.query(
-    `insert into users (email, password_hash, full_name, phone, role, plan)
-     values ($1, $2, $3, $4, 'client', 'free') returning *`,
+    `insert into users (email, password_hash, full_name, phone, role, plan, auth_provider)
+     values ($1, $2, $3, $4, 'client', 'free', 'email') returning *`,
     [email.toLowerCase().trim(), hash, full_name.trim(), phone?.trim() || null]
   );
 
@@ -91,8 +91,8 @@ router.post('/google', async (req, res) => {
     if (!user) {
       const randomHash = await bcrypt.hash(Math.random().toString(36) + googleId, 10);
       const insert = await db.query(
-        `insert into users (email, password_hash, full_name, role, plan, is_verified)
-         values ($1, $2, $3, 'client', 'free', true) returning *`,
+        `insert into users (email, password_hash, full_name, role, plan, is_verified, auth_provider)
+         values ($1, $2, $3, 'client', 'free', true, 'google') returning *`,
         [email, randomHash, name]
       );
       user = insert.rows[0];
