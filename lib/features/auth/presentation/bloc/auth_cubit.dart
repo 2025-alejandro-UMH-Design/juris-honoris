@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -103,13 +104,16 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthLoading());
     try {
       final googleSignIn = GoogleSignIn(serverClientId: _webClientId);
+      debugPrint('[GoogleSignIn] Iniciando signIn...');
       final account = await googleSignIn.signIn();
+      debugPrint('[GoogleSignIn] account: $account');
       if (account == null) {
         emit(const AuthError('Inicio con Google cancelado o fallido'));
         return;
       }
       final auth = await account.authentication;
       final idToken = auth.idToken;
+      debugPrint('[GoogleSignIn] idToken null: ${idToken == null}');
       if (idToken == null) {
         emit(const AuthError('Google no devolvió un token válido. Verifica la configuración OAuth.'));
         return;
