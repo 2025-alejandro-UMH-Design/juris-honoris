@@ -7,13 +7,13 @@ import 'bloc/chat_cubit.dart';
 class ClientLawyerChatPage extends StatefulWidget {
   final String lawyerName;
   final String caseType;
-  final String lawyerId;
+  final String requestId;
 
   const ClientLawyerChatPage({
     super.key,
     required this.lawyerName,
     required this.caseType,
-    required this.lawyerId,
+    required this.requestId,
   });
 
   @override
@@ -28,8 +28,8 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ChatCubit>().loadMessages(widget.lawyerId);
-      context.read<ChatCubit>().markRead(widget.lawyerId);
+      context.read<ChatCubit>().loadMessages(widget.requestId);
+      context.read<ChatCubit>().markRead(widget.requestId);
     });
   }
 
@@ -43,7 +43,7 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
-    context.read<ChatCubit>().sendMessage(widget.lawyerId, text);
+    context.read<ChatCubit>().sendMessage(widget.requestId, text);
     Future.delayed(const Duration(milliseconds: 200), _scrollToBottom);
   }
 
@@ -170,7 +170,7 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
                         Text(state.message, style: const TextStyle(color: Color(0xFF757575))),
                         const SizedBox(height: 12),
                         TextButton(
-                          onPressed: () => context.read<ChatCubit>().loadMessages(widget.lawyerId),
+                          onPressed: () => context.read<ChatCubit>().loadMessages(widget.requestId),
                           child: const Text('Reintentar'),
                         ),
                       ],

@@ -88,7 +88,7 @@ abstract class Routes {
   static const profile = '/profile';
   static const upgrade = '/profile/upgrade';
   static const verifyIdentity = '/profile/verify';
-  static const clientChat = '/chat/:lawyerId';
+  static const clientChat = '/chat/:requestId';
   static const lawyerLogin = '/lawyer/login';
   static const lawyerRegister = '/lawyer/register';
   static const lawyerDashboard = '/lawyer/dashboard';
@@ -282,13 +282,13 @@ GoRouter createRouter(AuthCubit authCubit) {
 
       // ── Chat client-lawyer ───────────────────────────────────────────────
       GoRoute(
-        path: '/chat/:lawyerId',
+        path: '/chat/:requestId',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return BlocProvider(
             create: (_) => sl<ChatCubit>(),
             child: ClientLawyerChatPage(
-              lawyerId: state.pathParameters['lawyerId'] ?? '',
+              requestId: state.pathParameters['requestId'] ?? '',
               lawyerName: extra['lawyerName'] as String? ?? 'Abogado',
               caseType: extra['caseType'] as String? ?? 'Caso legal',
             ),

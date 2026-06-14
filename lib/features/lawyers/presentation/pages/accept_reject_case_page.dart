@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:juris_honoris/core/constants/api_config.dart';
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
+import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/shared/widgets/app_button.dart';
 import 'package:juris_honoris/shared/widgets/app_card.dart';
 
@@ -17,6 +20,19 @@ class AcceptRejectCasePage extends StatelessWidget {
     required this.caseData,
     this.isFirstCase = true,
   });
+
+  Future<void> _acceptRequest() async {
+    final dio = sl<Dio>();
+    await dio.put('${ApiConfig.requests}/${caseData['id']}/accept');
+  }
+
+  Future<void> _rejectRequest(String? reason) async {
+    final dio = sl<Dio>();
+    await dio.put(
+      '${ApiConfig.requests}/${caseData['id']}/reject',
+      data: {'reason': reason},
+    );
+  }
 
   void _onAccept(BuildContext context) {
     showDialog(
@@ -48,17 +64,29 @@ class AcceptRejectCasePage extends StatelessWidget {
                 style: TextStyle(color: AppColors.greyMedium)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(ctx).pop();
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => LawyerChatPage(
-                    clientName: caseData['clientName'] as String,
-                    caseType: caseData['type'] as String,
-                    caseId: caseData['id'] as String,
-                  ),
-                ),
-              );
+              try {
+                await _acceptRequest();
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (_) => LawyerChatPage(
+                        clientName: caseData['clientName'] as String,
+                        caseType: caseData['type'] as String,
+                        caseId: caseData['id'] as String,
+                      ),
+                    ),
+                  );
+                }
+              } on DioException catch (e) {
+                if (context.mounted) {
+                  final msg = e.response?.data?['error']?.toString() ??
+                      'Error al aceptar el caso';
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(msg)));
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.successGreen,
@@ -137,9 +165,20 @@ class AcceptRejectCasePage extends StatelessWidget {
                 style: TextStyle(color: AppColors.greyMedium)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final reason = reasonController.text.trim();
               Navigator.of(ctx).pop();
-              Navigator.of(context).pop();
+              try {
+                await _rejectRequest(reason.isEmpty ? null : reason);
+                if (context.mounted) Navigator.of(context).pop();
+              } on DioException catch (e) {
+                if (context.mounted) {
+                  final msg = e.response?.data?['error']?.toString() ??
+                      'Error al rechazar el caso';
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(msg)));
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.errorRed,

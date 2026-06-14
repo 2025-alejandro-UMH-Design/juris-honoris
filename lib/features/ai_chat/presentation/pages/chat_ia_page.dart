@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
@@ -387,9 +388,11 @@ class _NotConfiguredView extends StatelessWidget {
           if (isAdmin) ...[
             const SizedBox(height: AppSizes.xl),
             ElevatedButton.icon(
-              onPressed: () {
-                // Navegar al panel admin — el router lo gestiona
-                context.go('/admin');
+              onPressed: () async {
+                final uri = Uri.parse('https://jurishonorisadmin.vercel.app');
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
               },
               icon: const Icon(Icons.admin_panel_settings_outlined),
               label: const Text('Ir al panel admin'),
