@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:juris_honoris/features/auth/domain/entities/user_entity.dart';
 import 'package:juris_honoris/features/home/presentation/widgets/lawyer_card.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.dart';
 import 'package:juris_honoris/features/chat/bloc/chat_cubit.dart';
@@ -51,6 +53,21 @@ import 'package:juris_honoris/features/lawyers/presentation/pages/accept_reject_
 import 'package:juris_honoris/features/lawyers/presentation/pages/lawyer_chat_page.dart';
 import 'package:juris_honoris/features/lawyers/presentation/pages/lawyer_profile_edit_page.dart';
 
+// ── Auth refresh notifier ──────────────────────────────────────────────────
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _sub = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+  late final StreamSubscription<dynamic> _sub;
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
+}
+
 // ── Route names ────────────────────────────────────────────────────────────
 abstract class Routes {
   static const splash = '/';
@@ -96,16 +113,24 @@ GoRouter createRouter(AuthCubit authCubit) {
   return GoRouter(
     initialLocation: Routes.splash,
     debugLogDiagnostics: true,
+    refreshListenable: GoRouterRefreshStream(authCubit.stream),
     redirect: (context, state) {
       final authState = authCubit.state;
-      final isLoggingIn = state.matchedLocation == Routes.login ||
-          state.matchedLocation == Routes.register ||
-          state.matchedLocation == Routes.splash ||
-          state.matchedLocation.startsWith('/lawyer/login') ||
-          state.matchedLocation.startsWith('/lawyer/register');
+      final loc = state.matchedLocation;
+      final isAuthPage = loc == Routes.login ||
+          loc == Routes.register ||
+          loc == Routes.splash ||
+          loc.startsWith('/lawyer/login') ||
+          loc.startsWith('/lawyer/register');
 
-      // Not authenticated → redirect to login (except auth pages)
-      if (authState is AuthUnauthenticated && !isLoggingIn) {
+      // Authenticated on auth page → go to home
+      if (authState is AuthAuthenticated && isAuthPage) {
+        return authState.user.role == UserRole.lawyer
+            ? Routes.lawyerDashboard
+            : Routes.home;
+      }
+      // Not authenticated on protected page → go to login
+      if (authState is AuthUnauthenticated && !isAuthPage) {
         return Routes.login;
       }
       return null;
