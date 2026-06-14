@@ -6,8 +6,8 @@ import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
 import 'package:juris_honoris/shared/widgets/app_button.dart';
 import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
-import 'package:juris_honoris/features/tasks/presentation/pages/tasks_page.dart';
-import 'package:juris_honoris/features/tasks/presentation/pages/create_task_page.dart';
+import 'package:juris_honoris/features/tasks/presentation/bloc/documents_cubit.dart';
+import 'package:juris_honoris/features/tasks/presentation/pages/task_detail_page.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/bloc/recommendations_cubit.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/pages/required_docs_page.dart';
 import 'package:juris_honoris/injection_container.dart';
@@ -43,27 +43,22 @@ class _AIResultPageState extends State<AIResultPage> {
   }
 
   Future<void> _handleCreateHito() async {
-    final newTask = await Navigator.push<TaskData>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CreateTaskPage(
-          initialTitle: 'Seguimiento consulta legal',
-          initialDescription: widget.consultaSummary.isNotEmpty
-              ? widget.consultaSummary
-              : null,
-        ),
-      ),
-    );
-
-    if (newTask == null || !mounted) return;
-
     setState(() => _isCreating = true);
+
+    // Extrae el título de la primera línea no vacía del resumen de la IA
+    final rawTitle = widget.consultaSummary
+        .replaceAll(RegExp(r'[*#]+'), '')
+        .split('\n')
+        .map((l) => l.trim())
+        .firstWhere((l) => l.isNotEmpty, orElse: () => 'Consulta legal');
+    final title =
+        rawTitle.length > 50 ? '${rawTitle.substring(0, 47)}...' : rawTitle;
+
     context.read<CasesCubit>().createCase(
-          title: newTask.title,
-          description: newTask.description,
-          category: newTask.category,
-          priority: newTask.priority,
-          dueDate: newTask.dueDate.isNotEmpty ? newTask.dueDate : null,
+          title: title,
+          description: widget.consultaSummary,
+          category: 'other',
+          priority: 'medium',
         );
   }
 
@@ -74,13 +69,25 @@ class _AIResultPageState extends State<AIResultPage> {
         if (!_isCreating) return;
         if (state is CasesLoaded) {
           setState(() => _isCreating = false);
+          final newTask = state.cases.first;
           ScaffoldMessenger.of(ctx).showSnackBar(
             const SnackBar(
               content: Text('Hito creado correctamente'),
               backgroundColor: AppColors.successGreen,
             ),
           );
-          ctx.go('/tasks');
+          final casesCubit = ctx.read<CasesCubit>();
+          Navigator.of(ctx).push(
+            MaterialPageRoute(
+              builder: (_) => MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: casesCubit),
+                  BlocProvider(create: (_) => sl<DocumentsCubit>()),
+                ],
+                child: TaskDetailPage(task: newTask),
+              ),
+            ),
+          );
         } else if (state is CasesError) {
           setState(() => _isCreating = false);
           ScaffoldMessenger.of(ctx).showSnackBar(

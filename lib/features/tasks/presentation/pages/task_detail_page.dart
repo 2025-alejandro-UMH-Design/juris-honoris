@@ -7,6 +7,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/badge_widget.dart';
+import 'package:juris_honoris/features/ai_chat/presentation/bloc/recommendations_cubit.dart';
+import 'package:juris_honoris/features/ai_chat/presentation/pages/required_docs_page.dart';
+import 'package:juris_honoris/injection_container.dart';
 import '../bloc/cases_cubit.dart';
 import '../bloc/documents_cubit.dart';
 import 'tasks_page.dart';
@@ -41,6 +44,21 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   void dispose() {
     _notesController.dispose();
     super.dispose();
+  }
+
+  // ── Guía de documentos ─────────────────────────────────────────
+
+  void _openDocGuide() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => sl<RecommendationsCubit>(),
+          child: RequiredDocsPage(
+            consultaSummary: widget.task.description,
+          ),
+        ),
+      ),
+    );
   }
 
   // ── Upload ──────────────────────────────────────────────────────
@@ -264,6 +282,15 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                   style: const TextStyle(
                       fontSize: 14, color: AppColors.subtitleGrey, height: 1.5),
                 ),
+              ),
+
+              const SizedBox(height: AppSizes.lg),
+
+              AppButton(
+                label: 'Ver guía de documentos',
+                icon: Icons.folder_open_outlined,
+                variant: ButtonVariant.secondary,
+                onPressed: _openDocGuide,
               ),
 
               const SizedBox(height: AppSizes.lg),
