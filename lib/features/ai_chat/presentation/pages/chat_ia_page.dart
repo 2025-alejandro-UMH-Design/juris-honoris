@@ -17,6 +17,8 @@ import 'package:juris_honoris/features/tasks/presentation/bloc/plan_cubit.dart';
 import 'package:juris_honoris/features/tasks/presentation/pages/plan_page.dart';
 
 import 'ai_result_page.dart';
+import 'chat_history_page.dart';
+import 'package:juris_honoris/features/ai_chat/presentation/bloc/sessions_cubit.dart';
 
 class ChatIAPage extends StatefulWidget {
   const ChatIAPage({super.key});
@@ -29,6 +31,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
   final _focusNode = FocusNode();
+  bool _sessionSaved = false;
 
   static const _suggestions = [
     '¿Qué documentos necesito para un divorcio?',
@@ -150,6 +153,11 @@ class _ChatIAPageState extends State<ChatIAPage> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.history_rounded),
+            tooltip: 'Historial de consultas',
+            onPressed: _openHistory,
+          ),
+          IconButton(
             icon: const Icon(Icons.delete_outline),
             tooltip: 'Limpiar conversación',
             onPressed: () => _clearChat(context),
@@ -158,8 +166,19 @@ class _ChatIAPageState extends State<ChatIAPage> {
       ),
       body: BlocConsumer<ChatIACubit, ChatIAState>(
         listener: (context, state) {
+          if (state is ChatIAInitial) {
+            setState(() => _sessionSaved = false);
+          }
           if (state is ChatIALoaded) {
             _scrollToBottom();
+            if (state.lastNeedsLawyer != null && !_sessionSaved) {
+              setState(() => _sessionSaved = true);
+              final title = state.messages
+                  .where((m) => m.isUser)
+                  .map((m) => m.content)
+                  .firstOrNull ?? 'Consulta legal';
+              context.read<SessionsCubit>().saveSession(title, state.lastNeedsLawyer);
+            }
           }
           if (state is ChatIAError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -277,6 +296,17 @@ class _ChatIAPageState extends State<ChatIAPage> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  void _openHistory() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => sl<SessionsCubit>(),
+          child: const ChatHistoryPage(),
+        ),
       ),
     );
   }

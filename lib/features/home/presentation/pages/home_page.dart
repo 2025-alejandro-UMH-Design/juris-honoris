@@ -14,6 +14,7 @@ import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import '../../../tasks/presentation/bloc/cases_cubit.dart';
 import '../../../lawyers/presentation/bloc/lawyers_cubit.dart';
+import '../../../chat/bloc/my_requests_cubit.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   int _currentTab = 0;
   List<TaskData> _cases = const [];
   List<LawyerData> _lawyers = const [];
+  List<AcceptedRequest> _acceptedRequests = const [];
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       context.read<CasesCubit>().loadCases();
       context.read<LawyersCubit>().loadLawyers();
+      context.read<MyRequestsCubit>().load();
     });
   }
 
@@ -77,6 +80,13 @@ class _HomePageState extends State<HomePage> {
         BlocListener<LawyersCubit, LawyersState>(
           listener: (_, state) {
             if (state is LawyersLoaded) setState(() => _lawyers = state.lawyers);
+          },
+        ),
+        BlocListener<MyRequestsCubit, MyRequestsState>(
+          listener: (_, state) {
+            if (state is MyRequestsLoaded) {
+              setState(() => _acceptedRequests = state.requests);
+            }
           },
         ),
       ],
@@ -253,6 +263,46 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+
+            // Tu abogado (solo si hay solicitudes aceptadas)
+            if (_acceptedRequests.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSizes.pagePadding,
+                  AppSizes.xl,
+                  AppSizes.pagePadding,
+                  AppSizes.sm,
+                ),
+                child: Text(
+                  'Tu abogado',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.greyDark,
+                  ),
+                ),
+              ),
+              ..._acceptedRequests.map(
+                (req) => Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSizes.pagePadding,
+                    0,
+                    AppSizes.pagePadding,
+                    AppSizes.cardGap,
+                  ),
+                  child: _LawyerChatCard(
+                    request: req,
+                    onChat: () => context.go(
+                      '/chat/${req.id}',
+                      extra: {
+                        'lawyerName': req.lawyerName,
+                        'caseType': req.caseType,
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
 
             // Mis casos activos
             Padding(
@@ -780,5 +830,95 @@ class _RecentActivityItem extends StatelessWidget {
       'commercial' => Icons.business_outlined,
       _ => Icons.folder_outlined,
     };
+  }
+}
+
+// ---------- Card de abogado asignado ----------
+
+class _LawyerChatCard extends StatelessWidget {
+  final AcceptedRequest request;
+  final VoidCallback onChat;
+
+  const _LawyerChatCard({required this.request, required this.onChat});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.cardPadding),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+        border: Border.all(color: AppColors.primaryBlue.withValues(alpha: 0.3)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primaryBlue.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.person_rounded,
+              color: AppColors.primaryBlue,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: AppSizes.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  request.lawyerName,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.greyDark,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  request.caseType,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.greyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSizes.sm),
+          ElevatedButton.icon(
+            onPressed: onChat,
+            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+            label: const Text(
+              'Chatear',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: AppColors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.md,
+                vertical: AppSizes.sm,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

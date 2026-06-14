@@ -11,7 +11,9 @@ import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.d
 import 'package:juris_honoris/features/chat/bloc/chat_cubit.dart';
 import 'package:juris_honoris/features/lawyers/presentation/bloc/lawyers_cubit.dart';
 import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
-import 'package:juris_honoris/features/tasks/presentation/bloc/documents_cubit.dart';
+import 'package:juris_honoris/features/chat/bloc/my_requests_cubit.dart';
+import 'package:juris_honoris/features/ai_chat/presentation/bloc/sessions_cubit.dart';
+import 'package:juris_honoris/features/ai_chat/presentation/bloc/recommendations_cubit.dart';
 
 // Auth
 import 'package:juris_honoris/features/auth/presentation/pages/splash_page.dart';
@@ -159,6 +161,7 @@ GoRouter createRouter(AuthCubit authCubit) {
           providers: [
             BlocProvider(create: (_) => sl<CasesCubit>()),
             BlocProvider(create: (_) => sl<LawyersCubit>()),
+            BlocProvider(create: (_) => sl<MyRequestsCubit>()),
           ],
           child: const HomePage(),
         ),
@@ -175,8 +178,11 @@ GoRouter createRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: Routes.chatIa,
-        builder: (context, state) => BlocProvider(
-          create: (_) => sl<ChatIACubit>(),
+        builder: (context, state) => MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => sl<ChatIACubit>()),
+            BlocProvider(create: (_) => sl<SessionsCubit>()),
+          ],
           child: const ChatIAPage(),
         ),
       ),
@@ -246,7 +252,7 @@ GoRouter createRouter(AuthCubit authCubit) {
           final task = (state.extra as TaskData?) ??
               TaskData(id: id, title: '', description: '', status: 'pending', category: 'other', priority: 'medium', dueDate: '');
           return BlocProvider(
-            create: (_) => sl<DocumentsCubit>(),
+            create: (_) => sl<RecommendationsCubit>(),
             child: TaskDetailPage(task: task),
           );
         },
