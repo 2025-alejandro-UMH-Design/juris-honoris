@@ -7,6 +7,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/badge_widget.dart';
+import '../bloc/cases_cubit.dart';
 import '../bloc/documents_cubit.dart';
 import 'tasks_page.dart';
 
@@ -20,7 +21,6 @@ class TaskDetailPage extends StatefulWidget {
 }
 
 class _TaskDetailPageState extends State<TaskDetailPage> {
-  late List<_Subtask> _subtasks;
   late TextEditingController _notesController;
   late String _currentStatus;
   final _picker = ImagePicker();
@@ -30,11 +30,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     super.initState();
     _currentStatus = widget.task.status;
     _notesController = TextEditingController();
-    _subtasks = [
-      _Subtask(title: 'Reunir documentos de identidad', done: true),
-      _Subtask(title: 'Obtener copias certificadas', done: false),
-      _Subtask(title: 'Agendar cita con el abogado', done: false),
-    ];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.task.id.isNotEmpty) {
         context.read<DocumentsCubit>().loadDocuments(widget.task.id);
@@ -273,37 +268,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
 
               const SizedBox(height: AppSizes.lg),
 
-              _SectionCard(
-                title: 'Subtareas',
-                child: Column(
-                  children: _subtasks.asMap().entries.map((e) {
-                    final i = e.key;
-                    final sub = e.value;
-                    return CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: sub.done,
-                      onChanged: (v) =>
-                          setState(() => _subtasks[i].done = v ?? false),
-                      title: Text(
-                        sub.title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.greyDark,
-                          decoration:
-                              sub.done ? TextDecoration.lineThrough : null,
-                          decorationColor: AppColors.greyMedium,
-                        ),
-                      ),
-                      activeColor: AppColors.successGreen,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      dense: true,
-                    );
-                  }).toList(),
-                ),
-              ),
-
-              const SizedBox(height: AppSizes.lg),
-
               // ── Documentos del caso ───────────────────────────
               _DocsSection(
                 caseId: widget.task.id,
@@ -378,6 +342,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     setState(() => _currentStatus = 'completed');
     widget.task.status = 'completed';
     widget.task.checked = true;
+    context.read<CasesCubit>().updateStatus(widget.task.id, 'completed');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Tarea marcada como completada'),
@@ -713,9 +678,3 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _Subtask {
-  final String title;
-  bool done;
-
-  _Subtask({required this.title, required this.done});
-}

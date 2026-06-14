@@ -80,7 +80,7 @@ class _AIResultPageState extends State<AIResultPage> {
               backgroundColor: AppColors.successGreen,
             ),
           );
-          ctx.go('/dossier');
+          ctx.go('/tasks');
         } else if (state is CasesError) {
           setState(() => _isCreating = false);
           ScaffoldMessenger.of(ctx).showSnackBar(
