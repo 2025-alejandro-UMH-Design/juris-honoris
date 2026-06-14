@@ -12,6 +12,7 @@ class RequiredDoc {
   final String institution;
   final String address;
   final String mapsQuery;
+  final String note;
 
   const RequiredDoc({
     required this.name,
@@ -19,6 +20,7 @@ class RequiredDoc {
     required this.institution,
     required this.address,
     required this.mapsQuery,
+    this.note = '',
   });
 
   factory RequiredDoc.fromJson(Map<String, dynamic> j) => RequiredDoc(
@@ -27,6 +29,7 @@ class RequiredDoc {
         institution: j['institution']?.toString() ?? '',
         address: j['address']?.toString() ?? '',
         mapsQuery: j['maps_query']?.toString() ?? '',
+        note: j['note']?.toString() ?? '',
       );
 }
 

@@ -5,8 +5,8 @@ import 'package:juris_honoris/core/constants/app_sizes.dart';
 /// Barra de acciones contextual que aparece cuando la IA determina si el
 /// usuario necesita un abogado o puede gestionar el trámite por sí mismo.
 ///
-/// - [needsLawyer] = true → botón "Solicitar Abogado" + "Ver directorio"
-/// - [needsLawyer] = false → botón "Ver mis documentos" + "Crear hito"
+/// - [needsLawyer] = false → botón verde full-width "Ver plan de acción"
+/// - [needsLawyer] = true  → botón "Solicitar Abogado" + "Ver directorio"
 class ActionButtonsBar extends StatelessWidget {
   final bool needsLawyer;
   final VoidCallback? onPrimaryAction;
@@ -35,35 +35,63 @@ class ActionButtonsBar extends StatelessWidget {
             top: BorderSide(color: AppColors.borderColor, width: 1),
           ),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _ActionButton(
-                label: needsLawyer ? 'Solicitar Abogado' : 'Ver mis documentos',
-                icon: needsLawyer ? Icons.gavel : Icons.folder_open,
-                variant: needsLawyer
-                    ? _ButtonVariant.danger
-                    : _ButtonVariant.success,
-                onPressed: onPrimaryAction,
-              ),
-            ),
-            const SizedBox(width: AppSizes.sm),
-            Expanded(
-              child: _ActionButton(
-                label: needsLawyer ? 'Ver directorio' : 'Crear hito',
-                icon: needsLawyer ? Icons.people : Icons.flag,
-                variant: _ButtonVariant.secondary,
-                onPressed: onSecondaryAction,
-              ),
-            ),
-          ],
+        child: needsLawyer ? _lawyerButtons() : _planButton(),
+      ),
+    );
+  }
+
+  Widget _planButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: AppSizes.buttonHeight,
+      child: ElevatedButton.icon(
+        onPressed: onPrimaryAction,
+        icon: const Icon(Icons.article_outlined, size: 18),
+        label: const Text(
+          'Ver plan de accion',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.successGreen,
+          foregroundColor: AppColors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+          ),
         ),
       ),
     );
   }
+
+  Widget _lawyerButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: _ActionButton(
+            label: 'Solicitar Abogado',
+            icon: Icons.gavel,
+            variant: _ButtonVariant.danger,
+            onPressed: onPrimaryAction,
+          ),
+        ),
+        const SizedBox(width: AppSizes.sm),
+        Expanded(
+          child: _ActionButton(
+            label: 'Ver directorio',
+            icon: Icons.people,
+            variant: _ButtonVariant.secondary,
+            onPressed: onSecondaryAction,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-enum _ButtonVariant { danger, success, secondary }
+enum _ButtonVariant { danger, secondary }
 
 class _ActionButton extends StatelessWidget {
   final String label;
@@ -78,26 +106,15 @@ class _ActionButton extends StatelessWidget {
     this.onPressed,
   });
 
-  Color get _backgroundColor {
-    switch (variant) {
-      case _ButtonVariant.danger:
-        return AppColors.errorRed;
-      case _ButtonVariant.success:
-        return AppColors.successGreen;
-      case _ButtonVariant.secondary:
-        return AppColors.greyVeryLight;
-    }
-  }
+  Color get _backgroundColor => switch (variant) {
+        _ButtonVariant.danger => AppColors.errorRed,
+        _ButtonVariant.secondary => AppColors.greyVeryLight,
+      };
 
-  Color get _foregroundColor {
-    switch (variant) {
-      case _ButtonVariant.danger:
-      case _ButtonVariant.success:
-        return AppColors.white;
-      case _ButtonVariant.secondary:
-        return AppColors.greyDark;
-    }
-  }
+  Color get _foregroundColor => switch (variant) {
+        _ButtonVariant.danger => AppColors.white,
+        _ButtonVariant.secondary => AppColors.greyDark,
+      };
 
   @override
   Widget build(BuildContext context) {

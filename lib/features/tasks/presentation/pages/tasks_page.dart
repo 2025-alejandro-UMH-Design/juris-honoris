@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:juris_honoris/features/ai_chat/presentation/bloc/recommendations_cubit.dart';
+import 'package:juris_honoris/injection_container.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/bottom_nav_bar.dart';
@@ -198,7 +200,10 @@ class _TasksPageState extends State<TasksPage> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => TaskDetailPage(task: task),
+                            builder: (_) => BlocProvider(
+                              create: (_) => sl<RecommendationsCubit>(),
+                              child: TaskDetailPage(task: task),
+                            ),
                           ),
                         ),
                       );

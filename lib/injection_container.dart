@@ -12,6 +12,7 @@ import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:juris_honoris/features/chat/bloc/chat_cubit.dart';
 import 'package:juris_honoris/features/lawyers/presentation/bloc/lawyers_cubit.dart';
 import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
+import 'package:juris_honoris/features/tasks/presentation/bloc/plan_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -68,5 +69,9 @@ Future<void> initDependencies() async {
 
   sl.registerFactory<DocumentsCubit>(
     () => DocumentsCubit(dio: sl<Dio>()),
+  );
+
+  sl.registerFactory<PlanCubit>(
+    () => PlanCubit(dio: sl<Dio>()),
   );
 }

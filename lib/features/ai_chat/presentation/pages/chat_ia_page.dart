@@ -13,6 +13,8 @@ import 'package:juris_honoris/shared/widgets/bottom_nav_bar.dart';
 
 import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
+import 'package:juris_honoris/features/tasks/presentation/bloc/plan_cubit.dart';
+import 'package:juris_honoris/features/tasks/presentation/pages/plan_page.dart';
 
 import 'ai_result_page.dart';
 
@@ -245,11 +247,19 @@ class _ChatIAPageState extends State<ChatIAPage> {
               if (lastNeedsLawyer != null && !isTyping)
                 ActionButtonsBar(
                   needsLawyer: lastNeedsLawyer,
-                  onPrimaryAction: () => _navigateToResult(
-                    context,
-                    needsLawyer: lastNeedsLawyer!,
-                    summary: messages.isNotEmpty ? messages.last.content : '',
-                  ),
+                  onPrimaryAction: () {
+                    final summary =
+                        messages.isNotEmpty ? messages.last.content : '';
+                    if (!lastNeedsLawyer!) {
+                      _navigateToPlan(context, summary: summary);
+                    } else {
+                      _navigateToResult(
+                        context,
+                        needsLawyer: true,
+                        summary: summary,
+                      );
+                    }
+                  },
                   onSecondaryAction: () => _navigateToResult(
                     context,
                     needsLawyer: lastNeedsLawyer!,
@@ -267,6 +277,17 @@ class _ChatIAPageState extends State<ChatIAPage> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  void _navigateToPlan(BuildContext context, {required String summary}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => sl<PlanCubit>(),
+          child: PlanPage(consultaSummary: summary),
+        ),
       ),
     );
   }

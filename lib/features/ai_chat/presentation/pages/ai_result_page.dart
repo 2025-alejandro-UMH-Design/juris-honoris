@@ -6,7 +6,6 @@ import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
 import 'package:juris_honoris/shared/widgets/app_button.dart';
 import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
-import 'package:juris_honoris/features/tasks/presentation/bloc/documents_cubit.dart';
 import 'package:juris_honoris/features/tasks/presentation/pages/task_detail_page.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/bloc/recommendations_cubit.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/pages/required_docs_page.dart';
@@ -76,15 +75,14 @@ class _AIResultPageState extends State<AIResultPage> {
               backgroundColor: AppColors.successGreen,
             ),
           );
-          final casesCubit = ctx.read<CasesCubit>();
           Navigator.of(ctx).push(
             MaterialPageRoute(
-              builder: (_) => MultiBlocProvider(
-                providers: [
-                  BlocProvider.value(value: casesCubit),
-                  BlocProvider(create: (_) => sl<DocumentsCubit>()),
-                ],
-                child: TaskDetailPage(task: newTask),
+              builder: (_) => BlocProvider(
+                create: (_) => sl<RecommendationsCubit>(),
+                child: TaskDetailPage(
+                  task: newTask,
+                  consultaSummary: widget.consultaSummary,
+                ),
               ),
             ),
           );

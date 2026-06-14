@@ -169,6 +169,67 @@ Incluye 3 a 6 documentos relevantes. Usa instituciones reales de Honduras (Regis
   }
 });
 
+// POST /api/ai-chat/plan  — genera plan de acción estructurado para un trámite
+router.post('/plan', requireAuth, async (req, res) => {
+  const { summary } = req.body;
+  if (!summary?.trim()) return res.status(400).json({ error: 'summary requerido' });
+
+  const cfg = await db.query(
+    "select key, value from system_config where key in ('ai_active_provider','ai_api_key','ai_model')"
+  );
+  const map = Object.fromEntries(cfg.rows.map(r => [r.key, r.value]));
+  if (!map['ai_api_key']) return res.status(503).json({ error: 'El Chat IA no está configurado.' });
+
+  const provider = map['ai_active_provider'] || 'groq';
+  const apiKey   = map['ai_api_key'];
+  const model    = map['ai_model'] || defaultModel(provider);
+
+  const prompt = `Eres un experto en trámites legales de Honduras. Crea un plan de acción paso a paso.
+
+SITUACIÓN: ${summary.trim()}
+
+Responde ÚNICAMENTE con JSON válido (sin markdown). Formato exacto:
+{"title":"Nombre corto del proceso legal","steps":[{"order":1,"title":"Título del paso","description":"Descripción breve de la fase"}]}
+
+Genera entre 3 y 5 pasos secuenciales prácticos para Honduras. Solo el JSON.`;
+
+  const messages = [{ role: 'user', content: prompt }];
+
+  try {
+    let rawText;
+    if (provider === 'anthropic') {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+        body: JSON.stringify({ model, messages, max_tokens: 800 }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error?.message || 'Error de Anthropic');
+      rawText = d.content?.[0]?.text;
+    } else {
+      const urls = { groq: 'https://api.groq.com/openai/v1/chat/completions', openai: 'https://api.openai.com/v1/chat/completions', deepseek: 'https://api.deepseek.com/v1/chat/completions' };
+      const body = { model, messages, max_tokens: 800, temperature: 0.3 };
+      if (provider === 'groq' || provider === 'openai') body.response_format = { type: 'json_object' };
+      const r = await fetch(urls[provider] || urls.groq, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error?.message || 'Error del proveedor');
+      rawText = d.choices?.[0]?.message?.content;
+    }
+
+    if (!rawText) throw new Error('Respuesta vacía');
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Formato inválido');
+    const parsed = JSON.parse(jsonMatch[0]);
+    res.json({ title: parsed.title || 'Plan legal', steps: Array.isArray(parsed.steps) ? parsed.steps : [] });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/ai-chat/sessions  — historial de sesiones del usuario
 router.get('/sessions', requireAuth, async (req, res) => {
   const { rows } = await db.query(
