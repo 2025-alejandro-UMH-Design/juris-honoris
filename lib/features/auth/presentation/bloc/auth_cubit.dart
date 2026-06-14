@@ -14,7 +14,7 @@ class AuthCubit extends Cubit<AuthState> {
   final TokenStorage _tokenStorage;
 
   static const _webClientId =
-      '1009397974171-96o9mrncetemlh03li048e4fj7k4cue7.apps.googleusercontent.com';
+      '458412357656-oc6repf7lraquaca37i1gu6e79cujqh1.apps.googleusercontent.com';
 
   UserEntity? _currentUser;
 
