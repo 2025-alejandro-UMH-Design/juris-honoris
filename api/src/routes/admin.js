@@ -54,6 +54,29 @@ router.get('/users/:id', ...guard, async (req, res) => {
   res.json(rows[0]);
 });
 
+// PUT /api/admin/users/:id  — editar datos del usuario
+router.put('/users/:id', ...guard, async (req, res) => {
+  const { full_name, phone, dni, role } = req.body;
+  const validRoles = ['client', 'lawyer', 'admin'];
+  if (role && !validRoles.includes(role)) {
+    return res.status(400).json({ error: 'Rol inválido' });
+  }
+  const { rows, rowCount } = await db.query(
+    `update users
+     set full_name  = coalesce($1, full_name),
+         phone      = coalesce($2, phone),
+         dni        = coalesce($3, dni),
+         role       = coalesce($4, role),
+         updated_at = now()
+     where id = $5
+     returning id, email, full_name, phone, dni, role, plan, is_verified, auth_provider,
+               solicitations_this_month, created_at, updated_at`,
+    [full_name || null, phone || null, dni || null, role || null, req.params.id]
+  );
+  if (!rowCount) return res.status(404).json({ error: 'Usuario no encontrado' });
+  res.json(rows[0]);
+});
+
 // PUT /api/admin/users/:id/reset-password  — resetear contraseña
 router.put('/users/:id/reset-password', ...guard, async (req, res) => {
   const { new_password } = req.body;
