@@ -47,6 +47,10 @@ app.*.map.json
 .env.local
 *.env
 
+# Firebase config — contiene API keys, descargar desde Firebase Console
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
 # iOS
 ios/Flutter/App.framework
 ios/Flutter/Flutter.framework
