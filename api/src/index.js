@@ -68,10 +68,14 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', async () => {
   try {
     await db.query('select 1');
-    // Migración incremental: columna auth_provider
+    // Migraciones incrementales
     await db.query(`
       ALTER TABLE users
         ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(20) NOT NULL DEFAULT 'email'
+    `);
+    await db.query(`
+      ALTER TABLE cases
+        ADD COLUMN IF NOT EXISTS notes TEXT
     `);
     console.log(`✓ Juris Honoris API corriendo`);
     console.log(`  Local:    http://localhost:${PORT}/api/health`);

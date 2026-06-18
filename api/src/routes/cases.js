@@ -60,11 +60,6 @@ router.post('/', requireAuth, async (req, res) => {
 router.put('/:id', requireAuth, async (req, res) => {
   const { title, description, category, priority, status, due_date, notes } = req.body;
 
-  // Ensure the notes column exists (idempotent migration)
-  await db.query(`
-    ALTER TABLE cases ADD COLUMN IF NOT EXISTS notes TEXT
-  `).catch(() => {});
-
   const { rows } = await db.query(
     `update cases set
        title       = coalesce($1, title),
