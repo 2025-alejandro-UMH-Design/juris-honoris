@@ -251,8 +251,11 @@ GoRouter createRouter(AuthCubit authCubit) {
           final id = state.pathParameters['id'] ?? '';
           final task = (state.extra as TaskData?) ??
               TaskData(id: id, title: '', description: '', status: 'pending', category: 'other', priority: 'medium', dueDate: '');
-          return BlocProvider(
-            create: (_) => sl<RecommendationsCubit>(),
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => sl<RecommendationsCubit>()),
+              BlocProvider(create: (_) => sl<CasesCubit>()),
+            ],
             child: TaskDetailPage(task: task),
           );
         },

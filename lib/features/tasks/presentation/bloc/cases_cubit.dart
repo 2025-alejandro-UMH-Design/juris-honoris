@@ -63,6 +63,22 @@ class CasesCubit extends Cubit<CasesState> {
     } catch (_) {}
   }
 
+  Future<bool> saveNotes(String caseId, String notes) async {
+    try {
+      await _dio.put('${ApiConfig.cases}/$caseId', data: {'notes': notes});
+      if (state is CasesLoaded) {
+        final updated = (state as CasesLoaded).cases.map((c) {
+          if (c.id == caseId) c.notes = notes;
+          return c;
+        }).toList();
+        emit(CasesLoaded(updated));
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> deleteCase(String caseId) async {
     try {
       await _dio.delete('${ApiConfig.cases}/$caseId');

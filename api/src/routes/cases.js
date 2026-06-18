@@ -58,7 +58,12 @@ router.post('/', requireAuth, async (req, res) => {
 
 // PUT /api/cases/:id
 router.put('/:id', requireAuth, async (req, res) => {
-  const { title, description, category, priority, status, due_date } = req.body;
+  const { title, description, category, priority, status, due_date, notes } = req.body;
+
+  // Ensure the notes column exists (idempotent migration)
+  await db.query(`
+    ALTER TABLE cases ADD COLUMN IF NOT EXISTS notes TEXT
+  `).catch(() => {});
 
   const { rows } = await db.query(
     `update cases set
@@ -68,10 +73,11 @@ router.put('/:id', requireAuth, async (req, res) => {
        priority    = coalesce($4, priority),
        status      = coalesce($5, status),
        due_date    = coalesce($6, due_date),
+       notes       = coalesce($7, notes),
        updated_at  = now()
-     where id = $7 and client_id = $8
+     where id = $8 and client_id = $9
      returning *`,
-    [title, description, category, priority, status, due_date, req.params.id, req.user.id]
+    [title, description, category, priority, status, due_date, notes, req.params.id, req.user.id]
   );
   if (!rows[0]) return res.status(404).json({ error: 'Caso no encontrado' });
   res.json(rows[0]);

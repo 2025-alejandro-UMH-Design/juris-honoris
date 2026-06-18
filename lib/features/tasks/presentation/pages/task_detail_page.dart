@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/bloc/recommendations_cubit.dart';
+import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
 import 'tasks_page.dart';
 
 class TaskDetailPage extends StatefulWidget {
@@ -34,7 +35,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   @override
   void initState() {
     super.initState();
-    _notesController = TextEditingController();
+    _notesController = TextEditingController(text: widget.task.notes);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context
           .read<RecommendationsCubit>()
@@ -57,12 +58,16 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     }
   }
 
-  void _saveProgress() {
+  Future<void> _saveProgress() async {
+    final cubit = context.read<CasesCubit>();
+    final notes = _notesController.text.trim();
+    final saved = await cubit.saveNotes(widget.task.id, notes);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Progreso guardado correctamente'),
-        backgroundColor: AppColors.successGreen,
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(saved ? 'Progreso guardado correctamente' : 'Error al guardar, intenta de nuevo'),
+        backgroundColor: saved ? AppColors.successGreen : AppColors.errorRed,
+        duration: const Duration(seconds: 2),
       ),
     );
   }

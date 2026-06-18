@@ -7,6 +7,7 @@ import '../../../../shared/widgets/badge_widget.dart';
 import '../../../../shared/widgets/bottom_nav_bar.dart';
 import '../widgets/lawyer_card.dart';
 import '../../../tasks/presentation/pages/tasks_page.dart';
+import 'package:dio/dio.dart';
 import '../../../tasks/presentation/pages/task_detail_page.dart';
 import '../../../lawyers/presentation/pages/lawyer_profile_page.dart';
 import '../../../profile/presentation/pages/upgrade_page.dart';
@@ -15,6 +16,9 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../tasks/presentation/bloc/cases_cubit.dart';
 import '../../../lawyers/presentation/bloc/lawyers_cubit.dart';
 import '../../../chat/bloc/my_requests_cubit.dart';
+import '../../../ai_chat/presentation/bloc/recommendations_cubit.dart';
+import 'package:juris_honoris/injection_container.dart';
+import 'package:juris_honoris/core/constants/api_config.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,6 +42,17 @@ class _HomePageState extends State<HomePage> {
       context.read<LawyersCubit>().loadLawyers();
       context.read<MyRequestsCubit>().load();
     });
+  }
+
+  void _openNotifications(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _NotificationsPanelSheet(dio: sl<Dio>()),
+    );
   }
 
   void _onTabChanged(int index) {
@@ -128,7 +143,7 @@ class _HomePageState extends State<HomePage> {
                     color: AppColors.greyDark,
                     size: 26,
                   ),
-                  onPressed: () {},
+                  onPressed: () => _openNotifications(context),
                 ),
                 Positioned(
                   right: 10,
@@ -322,7 +337,13 @@ class _HomePageState extends State<HomePage> {
               onTapTask: (task) => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => TaskDetailPage(task: task),
+                  builder: (_) => MultiBlocProvider(
+                    providers: [
+                      BlocProvider(create: (_) => sl<RecommendationsCubit>()),
+                      BlocProvider(create: (_) => sl<CasesCubit>()),
+                    ],
+                    child: TaskDetailPage(task: task),
+                  ),
                 ),
               ),
             ),
@@ -368,7 +389,13 @@ class _HomePageState extends State<HomePage> {
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => TaskDetailPage(task: t),
+                                  builder: (_) => MultiBlocProvider(
+                                    providers: [
+                                      BlocProvider(create: (_) => sl<RecommendationsCubit>()),
+                                      BlocProvider(create: (_) => sl<CasesCubit>()),
+                                    ],
+                                    child: TaskDetailPage(task: t),
+                                  ),
                                 ),
                               ),
                             ),
@@ -387,7 +414,7 @@ class _HomePageState extends State<HomePage> {
               ),
               child: _SectionHeader(
                 title: 'Abogados destacados',
-                onVerTodo: () => context.go('/lawyers'),
+                onVerTodo: () => context.push('/lawyers'),
               ),
             ),
             SizedBox(
@@ -920,5 +947,201 @@ class _LawyerChatCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Panel de notificaciones
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AppNotif {
+  final String id;
+  final String title;
+  final String body;
+  final bool isRead;
+  final DateTime createdAt;
+
+  _AppNotif({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.isRead,
+    required this.createdAt,
+  });
+
+  factory _AppNotif.fromJson(Map<String, dynamic> j) => _AppNotif(
+        id: j['id']?.toString() ?? '',
+        title: j['title']?.toString() ?? 'Notificación',
+        body: j['body']?.toString() ?? '',
+        isRead: j['is_read'] == true,
+        createdAt: DateTime.tryParse(j['created_at']?.toString() ?? '') ?? DateTime.now(),
+      );
+}
+
+class _NotificationsPanelSheet extends StatefulWidget {
+  final Dio dio;
+  const _NotificationsPanelSheet({required this.dio});
+
+  @override
+  State<_NotificationsPanelSheet> createState() => _NotificationsPanelSheetState();
+}
+
+class _NotificationsPanelSheetState extends State<_NotificationsPanelSheet> {
+  List<_AppNotif> _notifs = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final res = await widget.dio.get(ApiConfig.notifications);
+      final list = (res.data as List)
+          .map((j) => _AppNotif.fromJson(j as Map<String, dynamic>))
+          .toList();
+      if (mounted) setState(() { _notifs = list; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() { _error = 'No se pudieron cargar las notificaciones'; _loading = false; });
+    }
+  }
+
+  Future<void> _markAllRead() async {
+    try {
+      await widget.dio.put('${ApiConfig.notifications}/read-all');
+      if (mounted) {
+        setState(() {
+          _notifs = _notifs.map((n) => _AppNotif(
+            id: n.id, title: n.title, body: n.body,
+            isRead: true, createdAt: n.createdAt,
+          )).toList();
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final unread = _notifs.where((n) => !n.isRead).length;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (_, controller) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: AppColors.greyLight, borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSizes.pagePadding, 0, AppSizes.pagePadding, AppSizes.sm),
+            child: Row(
+              children: [
+                const Text('Notificaciones',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.greyDark)),
+                const Spacer(),
+                if (unread > 0)
+                  TextButton(
+                    onPressed: _markAllRead,
+                    child: Text('Marcar todas ($unread)',
+                        style: const TextStyle(fontSize: 12, color: AppColors.primaryBlue)),
+                  ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.borderColor),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue, strokeWidth: 2))
+                : _error != null
+                    ? Center(child: Text(_error!, style: const TextStyle(color: AppColors.greyMedium)))
+                    : _notifs.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.notifications_none_rounded, size: 48, color: AppColors.greyLight),
+                                SizedBox(height: AppSizes.sm),
+                                Text('Sin notificaciones',
+                                    style: TextStyle(fontSize: 14, color: AppColors.greyMedium)),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            controller: controller,
+                            itemCount: _notifs.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1, color: AppColors.borderColor),
+                            itemBuilder: (_, i) {
+                              final n = _notifs[i];
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: n.isRead
+                                      ? AppColors.greyVeryLight
+                                      : AppColors.primaryBlue.withValues(alpha: 0.1),
+                                  child: Icon(
+                                    Icons.notifications_rounded,
+                                    size: 20,
+                                    color: n.isRead ? AppColors.greyMedium : AppColors.primaryBlue,
+                                  ),
+                                ),
+                                title: Text(
+                                  n.title,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold,
+                                    color: AppColors.greyDark,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (n.body.isNotEmpty)
+                                      Text(n.body,
+                                          style: const TextStyle(
+                                              fontSize: 12, color: AppColors.greyMedium),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis),
+                                    Text(
+                                      _timeAgo(n.createdAt),
+                                      style: const TextStyle(
+                                          fontSize: 11, color: AppColors.hintGrey),
+                                    ),
+                                  ],
+                                ),
+                                trailing: n.isRead
+                                    ? null
+                                    : Container(
+                                        width: 8, height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.primaryBlue,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                isThreeLine: n.body.isNotEmpty,
+                              );
+                            },
+                          ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _timeAgo(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Ahora mismo';
+    if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
+    if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
+    if (diff.inDays == 1) return 'Ayer';
+    return 'Hace ${diff.inDays} días';
   }
 }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../home/presentation/widgets/lawyer_card.dart';
+import '../bloc/lawyers_cubit.dart';
 import 'lawyer_request_page.dart';
+import 'package:juris_honoris/injection_container.dart';
 
 class LawyerProfilePage extends StatelessWidget {
   final LawyerData lawyer;
@@ -224,7 +227,10 @@ class LawyerProfilePage extends StatelessWidget {
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => LawyerRequestPage(lawyer: lawyer),
+                          builder: (_) => BlocProvider(
+                            create: (_) => sl<LawyersCubit>(),
+                            child: LawyerRequestPage(lawyer: lawyer),
+                          ),
                         ),
                       ),
                     ),

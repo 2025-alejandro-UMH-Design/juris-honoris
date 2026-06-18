@@ -20,6 +20,7 @@ class TaskData {
   final String priority;
   final String dueDate;
   bool checked;
+  String notes;
 
   TaskData({
     required this.id,
@@ -30,6 +31,7 @@ class TaskData {
     required this.priority,
     required this.dueDate,
     this.checked = false,
+    this.notes = '',
   });
 
   factory TaskData.fromJson(Map<String, dynamic> j) {
@@ -42,6 +44,7 @@ class TaskData {
       priority: j['priority']?.toString() ?? 'medium',
       dueDate: j['due_date']?.toString() ?? j['dueDate']?.toString() ?? '',
       checked: j['status'] == 'completed',
+      notes: j['notes']?.toString() ?? '',
     );
   }
 }
@@ -192,16 +195,21 @@ class _TasksPageState extends State<TasksPage> {
                       return _TaskListItem(
                         task: task,
                         onCheck: (v) {
+                          final newStatus = (v ?? false) ? 'completed' : 'pending';
                           setState(() {
                             task.checked = v ?? false;
-                            task.status = task.checked ? 'completed' : 'pending';
+                            task.status = newStatus;
                           });
+                          context.read<CasesCubit>().updateStatus(task.id, newStatus);
                         },
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => BlocProvider(
-                              create: (_) => sl<RecommendationsCubit>(),
+                            builder: (_) => MultiBlocProvider(
+                              providers: [
+                                BlocProvider(create: (_) => sl<RecommendationsCubit>()),
+                                BlocProvider(create: (_) => sl<CasesCubit>()),
+                              ],
                               child: TaskDetailPage(task: task),
                             ),
                           ),

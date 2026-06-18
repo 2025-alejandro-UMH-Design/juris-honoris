@@ -290,25 +290,25 @@ class ProfilePage extends StatelessWidget {
                 _SettingRow(
                   icon: Icons.notifications_outlined,
                   label: 'Notificaciones',
-                  onTap: () {},
+                  onTap: () => _showNotificationsSheet(context),
                 ),
                 const Divider(height: 1, color: AppColors.borderColor),
                 _SettingRow(
                   icon: Icons.lock_outline_rounded,
                   label: 'Privacidad',
-                  onTap: () {},
+                  onTap: () => _showPrivacySheet(context),
                 ),
                 const Divider(height: 1, color: AppColors.borderColor),
                 _SettingRow(
                   icon: Icons.help_outline_rounded,
                   label: 'Ayuda',
-                  onTap: () {},
+                  onTap: () => _showHelpSheet(context),
                 ),
                 const Divider(height: 1, color: AppColors.borderColor),
                 _SettingRow(
                   icon: Icons.description_outlined,
                   label: 'Términos y condiciones',
-                  onTap: () {},
+                  onTap: () => _showTermsSheet(context),
                 ),
               ],
             ),
@@ -357,6 +357,129 @@ class ProfilePage extends StatelessWidget {
       bottomNavigationBar: BottomNavBar(
         currentIndex: currentNavIndex,
         onTabChanged: onNavChanged,
+      ),
+    );
+  }
+
+  void _showNotificationsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const _NotificationsSheet(),
+    );
+  }
+
+  void _showPrivacySheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const _InfoSheet(
+        title: 'Política de Privacidad',
+        icon: Icons.lock_outline_rounded,
+        sections: [
+          _InfoSection(
+            heading: 'Datos que recopilamos',
+            body:
+                'Recopilamos tu nombre, correo electrónico, DNI y teléfono para identificarte dentro de la plataforma. Esta información nunca es vendida a terceros.',
+          ),
+          _InfoSection(
+            heading: 'Uso de la información',
+            body:
+                'Usamos tus datos para conectarte con abogados verificados, personalizar las recomendaciones de la IA y enviarte notificaciones relacionadas con tus casos.',
+          ),
+          _InfoSection(
+            heading: 'Seguridad',
+            body:
+                'Tu información se almacena cifrada. Las contraseñas nunca se guardan en texto plano. Las claves de IA operan exclusivamente en nuestros servidores.',
+          ),
+          _InfoSection(
+            heading: 'Contacto',
+            body:
+                'Para ejercer tus derechos ARCO (Acceso, Rectificación, Cancelación u Oposición), escríbenos a privacidad@jurishonoris.hn.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHelpSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const _InfoSheet(
+        title: 'Ayuda',
+        icon: Icons.help_outline_rounded,
+        sections: [
+          _InfoSection(
+            heading: '¿Cómo consulto con la IA legal?',
+            body:
+                'Ve a la pestaña "Chat IA" en la barra inferior y escribe tu consulta jurídica. La IA analizará tu situación y, si es necesario, te recomendará un abogado.',
+          ),
+          _InfoSection(
+            heading: '¿Cómo solicito un abogado?',
+            body:
+                'Accede al Directorio de Abogados, selecciona un perfil y presiona "Solicitar Servicio". Con el Plan Gratuito puedes enviar hasta 3 solicitudes por mes.',
+          ),
+          _InfoSection(
+            heading: '¿Qué son los hitos?',
+            body:
+                'Los hitos son tareas o casos legales que puedes crear para hacer seguimiento de tus trámites. Puedes marcar actividades completadas y añadir notas.',
+          ),
+          _InfoSection(
+            heading: 'Soporte técnico',
+            body:
+                'Si tienes problemas técnicos, escríbenos a soporte@jurishonoris.hn o al WhatsApp +504 9999-0000. Atendemos de lunes a viernes de 8 a.m. a 5 p.m.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTermsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const _InfoSheet(
+        title: 'Términos y Condiciones',
+        icon: Icons.description_outlined,
+        sections: [
+          _InfoSection(
+            heading: '1. Uso del servicio',
+            body:
+                'Juris Honoris es una plataforma de orientación legal en Honduras. No sustituye el consejo de un abogado colegiado. La IA proporciona información general, no asesoramiento legal vinculante.',
+          ),
+          _InfoSection(
+            heading: '2. Responsabilidades del usuario',
+            body:
+                'El usuario es responsable de la veracidad de la información proporcionada y del uso adecuado de la plataforma. Está prohibido el uso para fines ilícitos.',
+          ),
+          _InfoSection(
+            heading: '3. Relación con abogados',
+            body:
+                'Juris Honoris actúa como intermediario entre clientes y abogados. No garantiza resultados legales. Los honorarios y acuerdos son directamente entre el cliente y el abogado.',
+          ),
+          _InfoSection(
+            heading: '4. Modificaciones',
+            body:
+                'Nos reservamos el derecho de modificar estos términos. Los cambios serán notificados con al menos 15 días de anticipación mediante la aplicación.',
+          ),
+          _InfoSection(
+            heading: '5. Jurisdicción',
+            body:
+                'Estos términos se rigen por las leyes de la República de Honduras. Cualquier controversia se resolverá ante los tribunales competentes de Tegucigalpa, M.D.C.',
+          ),
+        ],
       ),
     );
   }
@@ -637,6 +760,209 @@ class _OutlineButton extends StatelessWidget {
             color: AppColors.primaryBlue,
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sheet de notificaciones
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _NotificationsSheet extends StatefulWidget {
+  const _NotificationsSheet();
+
+  @override
+  State<_NotificationsSheet> createState() => _NotificationsSheetState();
+}
+
+class _NotificationsSheetState extends State<_NotificationsSheet> {
+  bool _mensajes = true;
+  bool _solicitudes = true;
+  bool _actualizaciones = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSizes.pagePadding, AppSizes.xl, AppSizes.pagePadding, AppSizes.xl2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.greyLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSizes.lg),
+          const Text(
+            'Notificaciones',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.greyDark),
+          ),
+          const SizedBox(height: AppSizes.lg),
+          _SwitchRow(
+            label: 'Nuevos mensajes',
+            subtitle: 'Cuando un abogado te escribe',
+            value: _mensajes,
+            onChanged: (v) => setState(() => _mensajes = v),
+          ),
+          const Divider(height: AppSizes.xl, color: AppColors.borderColor),
+          _SwitchRow(
+            label: 'Solicitudes',
+            subtitle: 'Respuestas a tus solicitudes de servicio',
+            value: _solicitudes,
+            onChanged: (v) => setState(() => _solicitudes = v),
+          ),
+          const Divider(height: AppSizes.xl, color: AppColors.borderColor),
+          _SwitchRow(
+            label: 'Actualizaciones de la app',
+            subtitle: 'Novedades y mejoras de Juris Honoris',
+            value: _actualizaciones,
+            onChanged: (v) => setState(() => _actualizaciones = v),
+          ),
+          const SizedBox(height: AppSizes.lg),
+          SizedBox(
+            width: double.infinity,
+            height: AppSizes.buttonHeight,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: AppColors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
+              ),
+              child: const Text('Guardar preferencias', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SwitchRow extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SwitchRow({
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.greyDark)),
+              const SizedBox(height: 2),
+              Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.greyMedium)),
+            ],
+          ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: AppColors.primaryBlue,
+          activeTrackColor: AppColors.primaryBlue.withValues(alpha: 0.4),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sheet genérico de información (Privacidad, Ayuda, Términos)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _InfoSection {
+  final String heading;
+  final String body;
+  const _InfoSection({required this.heading, required this.body});
+}
+
+class _InfoSheet extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<_InfoSection> sections;
+
+  const _InfoSheet({
+    required this.title,
+    required this.icon,
+    required this.sections,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, controller) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.greyLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSizes.pagePadding, 0, AppSizes.pagePadding, AppSizes.md),
+            child: Row(
+              children: [
+                Icon(icon, color: AppColors.primaryBlue, size: 22),
+                const SizedBox(width: AppSizes.sm),
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.greyDark),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.borderColor),
+          Expanded(
+            child: ListView.separated(
+              controller: controller,
+              padding: const EdgeInsets.all(AppSizes.pagePadding),
+              itemCount: sections.length,
+              separatorBuilder: (_, __) => const SizedBox(height: AppSizes.lg),
+              itemBuilder: (_, i) {
+                final s = sections[i];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.heading,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.greyDark),
+                    ),
+                    const SizedBox(height: AppSizes.xs),
+                    Text(
+                      s.body,
+                      style: const TextStyle(fontSize: 13, color: AppColors.subtitleGrey, height: 1.5),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
