@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('express-async-errors');
 const express   = require('express');
 const cors      = require('cors');
 const helmet    = require('helmet');
@@ -80,7 +81,9 @@ app.use((err, _req, res, _next) => {
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ error: 'El archivo supera el tamaño máximo permitido' });
   }
-  res.status(500).json({ error: err.message || 'Error interno del servidor' });
+  // No exponer detalles internos de DB ni stack traces en producción
+  const isProd = process.env.NODE_ENV === 'production';
+  res.status(500).json({ error: isProd ? 'Error interno del servidor' : (err.message || 'Error interno del servidor') });
 });
 
 // ── Arranque ──────────────────────────────────────────────────

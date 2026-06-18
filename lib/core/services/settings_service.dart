@@ -6,7 +6,7 @@ class SettingsService {
   // --- Claves base ---
   static const String _activeProvider = 'active_ai_provider';
   static const String _adminPin = 'admin_pin';
-  static const String _defaultAdminPin = '1234';
+  static const String _defaultAdminPin = '';
 
   // Sub-claves por proveedor (prefijo + providerKey)
   static String _enabledKey(String pk) => 'provider_${pk}_enabled';
