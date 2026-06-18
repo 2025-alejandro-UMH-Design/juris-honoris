@@ -41,9 +41,10 @@ router.get('/', requireAuth, async (req, res) => {
 router.post('/', requireAuth, uploadCase.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Archivo requerido' });
 
-  const caseRow = await db.query('select client_id from cases where id = $1', [req.params.caseId]);
+  const caseRow = await db.query('select client_id, lawyer_id from cases where id = $1', [req.params.caseId]);
   if (!caseRow.rows[0]) return res.status(404).json({ error: 'Caso no encontrado' });
-  if (caseRow.rows[0].client_id !== req.user.id && req.user.role !== 'lawyer') {
+  const { client_id: uploadClientId, lawyer_id: uploadLawyerId } = caseRow.rows[0];
+  if (req.user.id !== uploadClientId && req.user.id !== uploadLawyerId) {
     return res.status(403).json({ error: 'Sin acceso a este caso' });
   }
 

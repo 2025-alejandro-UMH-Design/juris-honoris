@@ -1,10 +1,31 @@
 require('dotenv').config();
-const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
-const db      = require('./db');
+const express   = require('express');
+const cors      = require('cors');
+const helmet    = require('helmet');
+const rateLimit = require('express-rate-limit');
+const path      = require('path');
+const db        = require('./db');
 
 const app = express();
+
+// ── Seguridad global ───────────────────────────────────────────
+app.use(helmet());
+
+// Rate limiting: login (5/15min por IP), IA (30/hora por IP)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Demasiados intentos. Intenta en 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const aiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  message: { error: 'Límite de consultas IA alcanzado. Intenta en una hora.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ── Middleware global ──────────────────────────────────────────
 const allowedOrigins = [
@@ -25,10 +46,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Servir archivos subidos estáticamente (con auth debería ser por endpoint, esto es para dev)
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
 // ── Routes ────────────────────────────────────────────────────
+app.use('/api/auth/login',    loginLimiter);
+app.use('/api/ai-chat',       aiLimiter);
 app.use('/api/auth',          require('./routes/auth'));
 app.use('/api/lawyers',       require('./routes/lawyers'));
 app.use('/api/cases',         require('./routes/cases'));
@@ -47,7 +67,7 @@ app.get('/api/health', async (_req, res) => {
     await db.query('select 1');
     res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
   } catch (err) {
-    res.status(500).json({ status: 'error', db: err.message });
+    res.status(500).json({ status: 'error', db: 'unavailable' });
   }
 });
 
@@ -76,6 +96,10 @@ app.listen(PORT, '0.0.0.0', async () => {
     await db.query(`
       ALTER TABLE cases
         ADD COLUMN IF NOT EXISTS notes TEXT
+    `);
+    await db.query(`
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS solicitations_reset_at TIMESTAMPTZ
     `);
     console.log(`✓ Juris Honoris API corriendo`);
     console.log(`  Local:    http://localhost:${PORT}/api/health`);

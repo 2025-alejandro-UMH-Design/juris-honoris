@@ -7,7 +7,7 @@ function requireAuth(req, res, next) {
   }
 
   try {
-    req.user = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET);
+    req.user = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET, { algorithms: ['HS256'] });
     next();
   } catch {
     res.status(401).json({ error: 'Token inválido o expirado' });

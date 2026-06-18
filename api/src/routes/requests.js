@@ -55,9 +55,22 @@ router.post('/', requireAuth, requireRole('client'), async (req, res) => {
     return res.status(400).json({ error: 'lawyer_id y case_type son requeridos' });
   }
 
-  // Verifica límite plan free (max 3/mes)
-  const user = await db.query('select plan, solicitations_this_month from users where id = $1', [req.user.id]);
-  const { plan, solicitations_this_month } = user.rows[0];
+  // Verifica límite plan free (max 3/mes) — resetea si el mes cambió
+  const user = await db.query(
+    'select plan, solicitations_this_month, solicitations_reset_at from users where id = $1',
+    [req.user.id]
+  );
+  let { plan, solicitations_this_month } = user.rows[0];
+  const resetAt = user.rows[0].solicitations_reset_at;
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+  if (!resetAt || new Date(resetAt) < startOfMonth) {
+    await db.query(
+      'update users set solicitations_this_month = 0, solicitations_reset_at = date_trunc(\'month\', now()) where id = $1',
+      [req.user.id]
+    );
+    solicitations_this_month = 0;
+  }
   if (plan === 'free' && solicitations_this_month >= 3) {
     return res.status(403).json({ error: 'Límite de solicitudes del plan gratuito alcanzado (3/mes). Actualiza a Premium.' });
   }

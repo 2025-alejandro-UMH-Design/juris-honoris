@@ -5,23 +5,21 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 // POST /api/reviews  — cliente deja reseña al abogado
 router.post('/', requireAuth, requireRole('client'), async (req, res) => {
   const { lawyer_id, request_id, rating, comment } = req.body;
-  if (!lawyer_id || !rating) {
-    return res.status(400).json({ error: 'lawyer_id y rating son requeridos' });
+  if (!lawyer_id || !rating || !request_id) {
+    return res.status(400).json({ error: 'lawyer_id, request_id y rating son requeridos' });
   }
   if (rating < 1 || rating > 5) {
     return res.status(400).json({ error: 'El rating debe estar entre 1 y 5' });
   }
 
   // Verifica que exista una solicitud aceptada entre cliente y abogado
-  if (request_id) {
-    const req_ = await db.query(
-      `select id from lawyer_requests
-       where id = $1 and client_id = $2 and lawyer_id = $3 and status = 'accepted'`,
-      [request_id, req.user.id, lawyer_id]
-    );
-    if (!req_.rows[0]) {
-      return res.status(400).json({ error: 'No se puede reseñar sin una solicitud aceptada' });
-    }
+  const req_ = await db.query(
+    `select id from lawyer_requests
+     where id = $1 and client_id = $2 and lawyer_id = $3 and status = 'accepted'`,
+    [request_id, req.user.id, lawyer_id]
+  );
+  if (!req_.rows[0]) {
+    return res.status(400).json({ error: 'No se puede reseñar sin una solicitud aceptada' });
   }
 
   const { rows } = await db.query(

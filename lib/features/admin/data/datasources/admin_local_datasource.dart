@@ -7,12 +7,12 @@ class AdminLocalDatasource {
 
   static const _pinKey = 'admin_pin';
   static const _providersKey = 'ai_providers';
-  static const _defaultPin = '1234';
 
   AdminLocalDatasource({required SharedPreferences prefs}) : _prefs = prefs;
 
   Future<bool> verifyPin(String pin) async {
-    final stored = _prefs.getString(_pinKey) ?? _defaultPin;
+    final stored = _prefs.getString(_pinKey);
+    if (stored == null) return false;
     return pin == stored;
   }
 

@@ -114,7 +114,7 @@ void goNavBottom(BuildContext context, int index) {
 GoRouter createRouter(AuthCubit authCubit) {
   return GoRouter(
     initialLocation: Routes.splash,
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: false,
     refreshListenable: GoRouterRefreshStream(authCubit.stream),
     redirect: (context, state) {
       final authState = authCubit.state;
@@ -134,6 +134,16 @@ GoRouter createRouter(AuthCubit authCubit) {
       // Not authenticated on protected page → go to login
       if (authState is AuthUnauthenticated && !isAuthPage) {
         return Routes.login;
+      }
+      // Non-lawyer/admin trying to access lawyer routes → go to home
+      if (authState is AuthAuthenticated &&
+          loc.startsWith('/lawyer/') &&
+          !loc.startsWith('/lawyer/login') &&
+          !loc.startsWith('/lawyer/register')) {
+        final role = authState.user.role;
+        if (role != UserRole.lawyer && role != UserRole.admin) {
+          return Routes.home;
+        }
       }
       return null;
     },

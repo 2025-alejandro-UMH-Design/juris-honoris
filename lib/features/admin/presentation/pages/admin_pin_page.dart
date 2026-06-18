@@ -230,41 +230,6 @@ class _AdminPinPageState extends State<AdminPinPage> {
                         ),
                 ),
               ),
-              const SizedBox(height: AppSizes.xl),
-
-              // Nota PIN inicial
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.lg,
-                  vertical: AppSizes.md,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.secondaryOrange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppSizes.inputRadius),
-                  border: Border.all(
-                    color: AppColors.secondaryOrange.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: AppColors.secondaryOrange,
-                    ),
-                    SizedBox(width: AppSizes.sm),
-                    Text(
-                      'PIN inicial: 1234',
-                      style: TextStyle(
-                        color: AppColors.secondaryOrange,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         ),

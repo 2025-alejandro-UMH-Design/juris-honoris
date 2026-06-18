@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:juris_honoris/core/services/token_storage.dart';
+
 import 'package:juris_honoris/features/ai_chat/data/repositories/ai_repository_impl.dart';
 import 'package:juris_honoris/features/ai_chat/domain/repositories/ai_repository.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.dart';
@@ -21,7 +22,9 @@ final sl = GetIt.instance;
 Future<void> initDependencies() async {
   final prefs = await SharedPreferences.getInstance();
   sl.registerSingleton<SharedPreferences>(prefs);
-  sl.registerSingleton<TokenStorage>(TokenStorage(prefs));
+  final tokenStorage = TokenStorage();
+  await tokenStorage.load();
+  sl.registerSingleton<TokenStorage>(tokenStorage);
 
   // Dio con interceptor que inyecta el JWT en cada request
   final dio = Dio(BaseOptions(

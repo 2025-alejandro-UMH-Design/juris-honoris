@@ -75,7 +75,7 @@ router.post('/google', async (req, res) => {
     }
 
     const webClientId = process.env.GOOGLE_WEB_CLIENT_ID;
-    if (webClientId && info.aud !== webClientId) {
+    if (!webClientId || info.aud !== webClientId) {
       return res.status(401).json({ error: 'Token no autorizado para esta aplicación' });
     }
 

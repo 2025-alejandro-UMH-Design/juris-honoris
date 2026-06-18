@@ -60,7 +60,10 @@ class AuthCubit extends Cubit<AuthState> {
       _currentUser = user;
       emit(AuthAuthenticated(user));
     } on DioException catch (e) {
-      final msg = e.response?.data?['error'] ?? 'Credenciales incorrectas';
+      final statusCode = e.response?.statusCode ?? 0;
+      final msg = statusCode == 400 || statusCode == 401 || statusCode == 409
+          ? (e.response?.data?['error'] ?? 'Credenciales incorrectas')
+          : 'Error al iniciar sesión. Intenta de nuevo.';
       emit(AuthError(msg.toString()));
     } catch (e) {
       emit(const AuthError('Error al iniciar sesión'));
@@ -92,7 +95,10 @@ class AuthCubit extends Cubit<AuthState> {
       _currentUser = user;
       emit(AuthAuthenticated(user));
     } on DioException catch (e) {
-      final msg = e.response?.data?['error'] ?? 'Error al crear cuenta';
+      final statusCode = e.response?.statusCode ?? 0;
+      final msg = statusCode == 400 || statusCode == 409
+          ? (e.response?.data?['error'] ?? 'Error al crear cuenta')
+          : 'Error al crear cuenta. Intenta de nuevo.';
       emit(AuthError(msg.toString()));
     } catch (e) {
       emit(const AuthError('Error al crear cuenta'));
@@ -125,10 +131,13 @@ class AuthCubit extends Cubit<AuthState> {
       _currentUser = user;
       emit(AuthAuthenticated(user));
     } on DioException catch (e) {
-      final msg = e.response?.data?['error'] ?? 'Error al iniciar con Google';
+      final statusCode = e.response?.statusCode ?? 0;
+      final msg = statusCode == 400 || statusCode == 401
+          ? (e.response?.data?['error'] ?? 'Error al iniciar con Google')
+          : 'Error al iniciar con Google. Intenta de nuevo.';
       emit(AuthError(msg.toString()));
     } catch (e) {
-      emit(AuthError('Error Google Sign-In: ${e.toString()}'));
+      emit(const AuthError('Error al iniciar con Google'));
     }
   }
 

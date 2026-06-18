@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
 // GET /api/lawyers/:id  — perfil completo de abogado
 router.get('/:id', async (req, res) => {
   const { rows } = await db.query(
-    `select u.id, u.full_name, u.email, u.phone, u.avatar_path,
+    `select u.id, u.full_name, u.avatar_path,
             lp.city, lp.rating, lp.total_cases, lp.hourly_rate,
             lp.experience_years, lp.about, lp.colegiacion_number,
             lp.avail_weekdays, lp.avail_weekends, lp.avail_urgent,
@@ -52,7 +52,7 @@ router.get('/:id', async (req, res) => {
      join users u on u.id = lp.id
      left join lawyer_specialties ls on ls.lawyer_id = lp.id
      where lp.id = $1 and lp.verification_status = 'approved'
-     group by u.id, u.full_name, u.email, u.phone, u.avatar_path,
+     group by u.id, u.full_name, u.avatar_path,
               lp.city, lp.rating, lp.total_cases, lp.hourly_rate,
               lp.experience_years, lp.about, lp.colegiacion_number,
               lp.avail_weekdays, lp.avail_weekends, lp.avail_urgent,

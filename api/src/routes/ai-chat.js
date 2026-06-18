@@ -57,7 +57,7 @@ router.post('/message', requireAuth, async (req, res) => {
         body: JSON.stringify({
           model,
           messages: messages.filter(m => m.role !== 'system'),
-          system: SYSTEM_PROMPT,
+          system: systemPrompt,
           max_tokens: 1024,
         }),
       });
