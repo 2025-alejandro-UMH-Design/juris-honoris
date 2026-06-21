@@ -1,13 +1,15 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:juris_honoris/core/constants/api_config.dart';
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
+import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:juris_honoris/injection_container.dart';
+import 'package:juris_honoris/router/app_router.dart';
 import 'package:juris_honoris/shared/widgets/app_button.dart';
 import 'package:juris_honoris/shared/widgets/app_card.dart';
-
-import 'lawyer_dashboard_page.dart';
 
 class LawyerRegisterWizard extends StatefulWidget {
   const LawyerRegisterWizard({super.key});
@@ -135,6 +137,12 @@ class _LawyerRegisterWizardState extends State<LawyerRegisterWizard> {
         },
       );
       if (!mounted) return;
+      // Auto-login para que el JWT quede activo antes de ir al dashboard
+      await context.read<AuthCubit>().loginWithEmail(
+        _emailController.text.trim().toLowerCase(),
+        _passwordController.text,
+      );
+      if (!mounted) return;
       setState(() { _isLoading = false; _submitted = true; });
     } on DioException catch (e) {
       if (!mounted) return;
@@ -150,9 +158,7 @@ class _LawyerRegisterWizardState extends State<LawyerRegisterWizard> {
   Widget build(BuildContext context) {
     if (_submitted) {
       return _SuccessScreen(
-        onGoToDashboard: () => Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LawyerDashboardPage()),
-        ),
+        onGoToDashboard: () => context.go(Routes.lawyerDashboard),
       );
     }
 

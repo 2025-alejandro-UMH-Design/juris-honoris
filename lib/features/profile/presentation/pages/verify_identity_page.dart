@@ -112,7 +112,7 @@ class _VerifyIdentityPageState extends State<VerifyIdentityPage> {
                     controller: _dniController,
                     prefixIcon: Icons.badge_outlined,
                     validator: Validators.dni,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.text,
                   ),
                   const SizedBox(height: AppSizes.md),
                   AppInputField(

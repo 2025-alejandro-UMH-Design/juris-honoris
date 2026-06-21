@@ -57,7 +57,7 @@ class LawyersCubit extends Cubit<LawyersState> {
     try {
       await _dio.post(ApiConfig.requests, data: {
         'lawyer_id': lawyerId,
-        'subject': subject,
+        'case_type': subject,
         'description': description,
       });
       emit(const LawyerRequestSent());
