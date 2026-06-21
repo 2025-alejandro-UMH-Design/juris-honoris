@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:juris_honoris/core/constants/api_config.dart';
+import 'package:juris_honoris/core/services/fcm_service.dart';
 import 'package:juris_honoris/core/services/token_storage.dart';
 import 'package:juris_honoris/features/auth/domain/entities/user_entity.dart';
 
@@ -39,6 +40,7 @@ class AuthCubit extends Cubit<AuthState> {
       final user = UserEntity.fromJson(res.data as Map<String, dynamic>);
       _currentUser = user;
       emit(AuthAuthenticated(user));
+      FcmService.registerToken(_dio);
     } catch (_) {
       await _tokenStorage.clear();
       emit(const AuthUnauthenticated());
@@ -59,6 +61,7 @@ class AuthCubit extends Cubit<AuthState> {
           UserEntity.fromJson(res.data['user'] as Map<String, dynamic>);
       _currentUser = user;
       emit(AuthAuthenticated(user));
+      FcmService.registerToken(_dio);
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode ?? 0;
       final msg = statusCode == 400 || statusCode == 401 || statusCode == 409
@@ -94,6 +97,7 @@ class AuthCubit extends Cubit<AuthState> {
           UserEntity.fromJson(res.data['user'] as Map<String, dynamic>);
       _currentUser = user;
       emit(AuthAuthenticated(user));
+      FcmService.registerToken(_dio);
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode ?? 0;
       final msg = statusCode == 400 || statusCode == 409
@@ -130,6 +134,7 @@ class AuthCubit extends Cubit<AuthState> {
       final user = UserEntity.fromJson(res.data['user'] as Map<String, dynamic>);
       _currentUser = user;
       emit(AuthAuthenticated(user));
+      FcmService.registerToken(_dio);
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode ?? 0;
       final msg = statusCode == 400 || statusCode == 401

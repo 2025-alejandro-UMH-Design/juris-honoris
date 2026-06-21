@@ -10,8 +10,8 @@ import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/shared/widgets/app_card.dart';
 
 import 'accept_reject_case_page.dart';
+import 'lawyer_chat_list_page.dart';
 import 'lawyer_marketplace_page.dart';
-import 'lawyer_chat_page.dart';
 import 'lawyer_profile_edit_page.dart';
 
 // ── Main scaffold with bottom nav ──────────────────────────────────────────────
@@ -34,11 +34,7 @@ class _LawyerDashboardPageState extends State<LawyerDashboardPage> {
     _pages = const [
       _DashboardHome(),
       LawyerMarketplacePage(),
-      LawyerChatPage(
-        clientName: 'Juan G.',
-        caseType: 'Derecho de Familia',
-        caseId: 'c1',
-      ),
+      LawyerChatListPage(),
       LawyerProfileEditPage(),
     ];
   }

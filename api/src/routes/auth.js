@@ -119,14 +119,15 @@ router.get('/me', requireAuth, async (req, res) => {
 
 // PUT /api/auth/me  (actualizar perfil)
 router.put('/me', requireAuth, async (req, res) => {
-  const { full_name, phone, dni } = req.body;
+  const { full_name, phone, dni, fcm_token } = req.body;
   const { rows } = await db.query(
-    `update users set full_name = coalesce($1, full_name),
-                      phone     = coalesce($2, phone),
-                      dni       = coalesce($3, dni),
+    `update users set full_name  = coalesce($1, full_name),
+                      phone      = coalesce($2, phone),
+                      dni        = coalesce($3, dni),
+                      fcm_token  = coalesce($4, fcm_token),
                       updated_at = now()
-     where id = $4 returning *`,
-    [full_name, phone, dni, req.user.id]
+     where id = $5 returning *`,
+    [full_name || null, phone || null, dni || null, fcm_token || null, req.user.id]
   );
   res.json(sanitize(rows[0]));
 });

@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const db     = require('../db');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const fcm    = require('../services/fcm');
 
 // GET /api/requests  — lista según el rol
 router.get('/', requireAuth, async (req, res) => {
@@ -87,13 +88,16 @@ router.post('/', requireAuth, requireRole('client'), async (req, res) => {
     [req.user.id]
   );
 
-  // Crea notificación para el abogado
-  const clientRow = await db.query('select full_name from users where id = $1', [req.user.id]);
+  // Notificación DB + push al abogado
+  const clientRow = await db.query('select full_name, fcm_token from users where id = $1', [req.user.id]);
+  const clientName = clientRow.rows[0].full_name;
   await db.query(
     `insert into notifications (user_id, type, title, body, related_id)
      values ($1, 'request', 'Nueva solicitud de asesoría', $2, $3)`,
-    [lawyer_id, `${clientRow.rows[0].full_name} te solicita ${case_type}.`, rows[0].id]
+    [lawyer_id, `${clientName} te solicita ${case_type}.`, rows[0].id]
   );
+  const lawyerFcm = await db.query('select fcm_token from users where id = $1', [lawyer_id]);
+  await fcm.send(lawyerFcm.rows[0]?.fcm_token, 'Nueva solicitud de asesoría', `${clientName} te solicita ${case_type}.`);
 
   res.status(201).json(rows[0]);
 });
@@ -117,13 +121,16 @@ router.put('/:id/accept', requireAuth, requireRole('lawyer'), async (req, res) =
     );
   }
 
-  // Notificación al cliente
+  // Notificación DB + push al cliente
   const lawyerRow = await db.query('select full_name from users where id = $1', [req.user.id]);
+  const lawyerName = lawyerRow.rows[0].full_name;
   await db.query(
     `insert into notifications (user_id, type, title, body, related_id)
      values ($1, 'accepted', 'Solicitud aceptada', $2, $3)`,
-    [rows[0].client_id, `${lawyerRow.rows[0].full_name} aceptó tu solicitud de asesoría.`, rows[0].id]
+    [rows[0].client_id, `${lawyerName} aceptó tu solicitud de asesoría.`, rows[0].id]
   );
+  const clientFcm = await db.query('select fcm_token from users where id = $1', [rows[0].client_id]);
+  await fcm.send(clientFcm.rows[0]?.fcm_token, 'Solicitud aceptada', `${lawyerName} aceptó tu solicitud de asesoría.`);
 
   res.json(rows[0]);
 });
@@ -140,12 +147,15 @@ router.put('/:id/reject', requireAuth, requireRole('lawyer'), async (req, res) =
   );
   if (!rows[0]) return res.status(404).json({ error: 'Solicitud no encontrada o ya procesada' });
 
-  // Notificación al cliente
+  // Notificación DB + push al cliente
+  const rejectBody = reason || 'El abogado no pudo aceptar tu solicitud en este momento.';
   await db.query(
     `insert into notifications (user_id, type, title, body, related_id)
      values ($1, 'rejected', 'Solicitud no aceptada', $2, $3)`,
-    [rows[0].client_id, reason || 'El abogado no pudo aceptar tu solicitud en este momento.', rows[0].id]
+    [rows[0].client_id, rejectBody, rows[0].id]
   );
+  const rejClientFcm = await db.query('select fcm_token from users where id = $1', [rows[0].client_id]);
+  await fcm.send(rejClientFcm.rows[0]?.fcm_token, 'Solicitud no aceptada', rejectBody);
 
   res.json(rows[0]);
 });

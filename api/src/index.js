@@ -6,6 +6,8 @@ const helmet    = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path      = require('path');
 const db        = require('./db');
+const fcm       = require('./services/fcm');
+fcm.init();
 
 const app = express();
 
@@ -127,6 +129,9 @@ app.listen(PORT, '0.0.0.0', async () => {
         specialty VARCHAR(100) NOT NULL,
         PRIMARY KEY (lawyer_id, specialty)
       )
+    `);
+    await db.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS fcm_token TEXT
     `);
     console.log(`✓ Juris Honoris API corriendo`);
     console.log(`  Local:    http://localhost:${PORT}/api/health`);
