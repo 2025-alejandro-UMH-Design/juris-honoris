@@ -1,46 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
+import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:juris_honoris/shared/widgets/app_card.dart';
 
 import 'accept_reject_case_page.dart';
 import 'lawyer_marketplace_page.dart';
 import 'lawyer_chat_page.dart';
 import 'lawyer_profile_edit_page.dart';
-
-// ── Mock data ──────────────────────────────────────────────────────────────────
-
-const _mockCases = [
-  {
-    'id': 'c1',
-    'title': 'Divorcio por mutuo acuerdo',
-    'type': 'Derecho de Familia',
-    'clientName': 'Juan G.',
-    'date': '2026-05-27',
-    'urgency': 'normal',
-    'description':
-        'Pareja desea separarse de mutuo acuerdo. Tienen 2 hijos menores. Necesitan acuerdo de custodia y pensión alimenticia.',
-  },
-  {
-    'id': 'c2',
-    'title': 'Demanda por despido injustificado',
-    'type': 'Derecho Laboral',
-    'clientName': 'María L.',
-    'date': '2026-05-26',
-    'urgency': 'urgent',
-    'description':
-        'Trabajadora despedida sin causa justificada después de 5 años. Solicita liquidación y daños.',
-  },
-  {
-    'id': 'c3',
-    'title': 'Proceso de herencia',
-    'type': 'Derecho Civil',
-    'clientName': 'Carlos R.',
-    'date': '2026-05-25',
-    'urgency': 'normal',
-    'description': 'Sucesión testamentaria de bienes inmuebles. 3 herederos.',
-  },
-];
 
 // ── Main scaffold with bottom nav ──────────────────────────────────────────────
 
@@ -131,8 +100,19 @@ class _LawyerBottomNav extends StatelessWidget {
 class _DashboardHome extends StatelessWidget {
   const _DashboardHome();
 
+  String _initials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts.last[0]}'.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = context.read<AuthCubit>().currentUser;
+    final displayName = user?.name ?? 'Abogado';
+    final initials = _initials(displayName);
+
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
@@ -145,15 +125,15 @@ class _DashboardHome extends StatelessWidget {
               fontWeight: FontWeight.bold,
               fontSize: 18),
         ),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: AppSizes.md),
+            padding: const EdgeInsets.only(right: AppSizes.md),
             child: CircleAvatar(
               backgroundColor: AppColors.primaryBlue,
               radius: 18,
               child: Text(
-                'CM',
-                style: TextStyle(
+                initials,
+                style: const TextStyle(
                     color: AppColors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.bold),
@@ -168,7 +148,7 @@ class _DashboardHome extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Welcome card ──────────────────────────────────────
-            _WelcomeCard(),
+            _WelcomeCard(name: displayName),
             const SizedBox(height: AppSizes.lg),
 
             // ── Stats grid ────────────────────────────────────────
@@ -183,7 +163,7 @@ class _DashboardHome extends StatelessWidget {
             _StatsGrid(),
             const SizedBox(height: AppSizes.lg),
 
-            // ── New requests ──────────────────────────────────────
+            // ── New requests (placeholder) ────────────────────────
             Row(
               children: [
                 const Text(
@@ -202,7 +182,7 @@ class _DashboardHome extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Text(
-                    '3',
+                    '0',
                     style: TextStyle(
                         color: AppColors.white,
                         fontSize: 11,
@@ -212,14 +192,13 @@ class _DashboardHome extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSizes.sm),
-            ..._mockCases.take(2).map((c) => _CaseListTile(
-                  caseData: c,
-                  showViewButton: true,
-                  context: context,
-                )),
+            const _EmptySection(
+              icon: Icons.inbox_outlined,
+              message: 'No tienes solicitudes pendientes',
+            ),
             const SizedBox(height: AppSizes.lg),
 
-            // ── Active cases ──────────────────────────────────────
+            // ── Active cases (placeholder) ────────────────────────
             const Text(
               'Casos activos',
               style: TextStyle(
@@ -228,17 +207,9 @@ class _DashboardHome extends StatelessWidget {
                   color: AppColors.greyDark),
             ),
             const SizedBox(height: AppSizes.sm),
-            const _ActiveCaseTile(
-              title: 'Divorcio por mutuo acuerdo',
-              client: 'Juan G.',
-              status: 'En negociación',
-              progress: 0.45,
-            ),
-            const _ActiveCaseTile(
-              title: 'Demanda por despido',
-              client: 'María L.',
-              status: 'Documentación',
-              progress: 0.2,
+            const _EmptySection(
+              icon: Icons.folder_open_outlined,
+              message: 'No tienes casos activos',
             ),
             const SizedBox(height: AppSizes.xl),
           ],
@@ -249,6 +220,9 @@ class _DashboardHome extends StatelessWidget {
 }
 
 class _WelcomeCard extends StatelessWidget {
+  final String name;
+  const _WelcomeCard({required this.name});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -269,9 +243,9 @@ class _WelcomeCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Buenos días, Dr. Mendoza',
-            style: TextStyle(
+          Text(
+            'Buenos días, $name',
+            style: const TextStyle(
                 color: AppColors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold),
@@ -341,26 +315,25 @@ class _StatsGrid extends StatelessWidget {
       children: const [
         _StatCard(
           label: 'Casos activos',
-          value: '2',
+          value: '0',
           icon: Icons.folder_open_outlined,
           iconColor: AppColors.primaryBlue,
         ),
         _StatCard(
           label: 'Casos total',
-          value: '5',
+          value: '0',
           icon: Icons.folder_copy_outlined,
           iconColor: AppColors.secondaryOrange,
         ),
         _StatCard(
           label: 'Rating',
-          value: '4.8',
+          value: '-',
           icon: Icons.star_outline,
           iconColor: AppColors.secondaryOrange,
-          suffix: ' ★',
         ),
         _StatCard(
           label: 'Ingresos mes',
-          value: 'L. 2,400',
+          value: 'L. 0',
           icon: Icons.account_balance_wallet_outlined,
           iconColor: AppColors.successGreen,
         ),
@@ -421,189 +394,29 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _CaseListTile extends StatelessWidget {
-  final Map<String, dynamic> caseData;
-  final bool showViewButton;
-  final BuildContext context;
+class _EmptySection extends StatelessWidget {
+  final IconData icon;
+  final String message;
 
-  const _CaseListTile({
-    required this.caseData,
-    required this.showViewButton,
-    required this.context,
-  });
+  const _EmptySection({required this.icon, required this.message});
 
   @override
-  Widget build(BuildContext ctx) {
-    final isUrgent = caseData['urgency'] == 'urgent';
+  Widget build(BuildContext context) {
     return AppCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  caseData['title'] as String,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: AppColors.greyDark),
-                ),
-              ),
-              _UrgencyBadge(isUrgent: isUrgent),
-            ],
-          ),
-          const SizedBox(height: AppSizes.xs),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.sm, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  caseData['type'] as String,
-                  style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.primaryBlue,
-                      fontWeight: FontWeight.w500),
-                ),
-              ),
-              const SizedBox(width: AppSizes.sm),
-              Text(
-                'Cliente: ${caseData['clientName']}',
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.subtitleGrey),
-              ),
-            ],
-          ),
-          if (showViewButton) ...[
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.xl),
+        child: Column(
+          children: [
+            Icon(icon, size: 40, color: AppColors.greyLight),
             const SizedBox(height: AppSizes.sm),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => AcceptRejectCasePage(caseData: caseData),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.arrow_forward, size: 14),
-                label: const Text('Ver detalles'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.primaryBlue,
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  textStyle: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600),
-                ),
+            Text(
+              message,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.greyMedium,
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ActiveCaseTile extends StatelessWidget {
-  final String title;
-  final String client;
-  final String status;
-  final double progress;
-
-  const _ActiveCaseTile({
-    required this.title,
-    required this.client,
-    required this.status,
-    required this.progress,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: AppColors.greyDark),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.sm, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.secondaryOrange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  status,
-                  style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.secondaryOrange,
-                      fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSizes.xs),
-          Text(
-            'Cliente: $client',
-            style: const TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
-          ),
-          const SizedBox(height: AppSizes.sm),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: AppColors.greyLight,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
-              minHeight: 6,
-            ),
-          ),
-          const SizedBox(height: AppSizes.xs),
-          Text(
-            '${(progress * 100).toStringAsFixed(0)}% completado',
-            style: const TextStyle(fontSize: 11, color: AppColors.subtitleGrey),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _UrgencyBadge extends StatelessWidget {
-  final bool isUrgent;
-  const _UrgencyBadge({required this.isUrgent});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 2),
-      decoration: BoxDecoration(
-        color: isUrgent ? AppColors.errorRed : AppColors.greyLight,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        isUrgent ? 'Urgente' : 'Normal',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: isUrgent ? AppColors.white : AppColors.greyDark,
         ),
       ),
     );

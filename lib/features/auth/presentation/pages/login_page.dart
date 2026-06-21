@@ -5,6 +5,7 @@ import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
 import 'package:juris_honoris/core/utils/validators.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:juris_honoris/features/lawyers/presentation/pages/lawyer_login_page.dart';
 import 'package:juris_honoris/shared/widgets/app_button.dart';
 import 'package:juris_honoris/shared/widgets/google_sign_in_button.dart';
 
@@ -53,7 +54,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
           }
-          // La navegación post-login la maneja el router del app.
         },
         builder: (context, state) {
           final isLoading = state is AuthLoading;
@@ -228,7 +228,45 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
-
+                    const SizedBox(height: AppSizes.lg),
+                    const Divider(color: AppColors.borderColor),
+                    const SizedBox(height: AppSizes.sm),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.gavel,
+                          size: 16,
+                          color: AppColors.subtitleGrey,
+                        ),
+                        const SizedBox(width: AppSizes.xs),
+                        const Text(
+                          '¿Eres abogado? ',
+                          style: TextStyle(color: AppColors.subtitleGrey),
+                        ),
+                        TextButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const LawyerLoginPage(),
+                                    ),
+                                  ),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Inicia sesión aquí',
+                            style: TextStyle(
+                              color: AppColors.primaryBlue,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -279,4 +317,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-
