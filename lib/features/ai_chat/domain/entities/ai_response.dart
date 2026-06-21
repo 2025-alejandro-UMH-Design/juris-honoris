@@ -4,16 +4,16 @@ class AIResponse extends Equatable {
   final String message;
   final bool needsLawyer;
   final String cleanMessage;
+  final String? specialty;
 
   const AIResponse({
     required this.message,
     required this.needsLawyer,
     required this.cleanMessage,
+    this.specialty,
   });
 
-  /// Parsea la respuesta cruda del modelo, extrayendo el tag [NECESITA_ABOGADO: SI/NO].
-  /// Si el tag no está presente, asume que no necesita abogado y usa el mensaje completo.
-  factory AIResponse.fromRaw(String rawResponse) {
+  factory AIResponse.fromRaw(String rawResponse, {String? specialty}) {
     const tagSi = '[NECESITA_ABOGADO: SI]';
     const tagNo = '[NECESITA_ABOGADO: NO]';
 
@@ -28,16 +28,16 @@ class AIResponse extends Equatable {
       cleanMessage = rawResponse.replaceAll(tagNo, '').trim();
     }
 
-    // Elimina líneas vacías finales que puedan quedar tras remover el tag
     cleanMessage = cleanMessage.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
 
     return AIResponse(
       message: rawResponse,
       needsLawyer: needsLawyer,
       cleanMessage: cleanMessage,
+      specialty: specialty,
     );
   }
 
   @override
-  List<Object?> get props => [message, needsLawyer, cleanMessage];
+  List<Object?> get props => [message, needsLawyer, cleanMessage, specialty];
 }

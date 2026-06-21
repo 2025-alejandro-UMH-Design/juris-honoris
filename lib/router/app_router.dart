@@ -213,10 +213,14 @@ GoRouter createRouter(AuthCubit authCubit) {
       // ── Lawyers ─────────────────────────────────────────────────────────
       GoRoute(
         path: Routes.lawyers,
-        builder: (context, state) => BlocProvider(
-          create: (_) => sl<LawyersCubit>(),
-          child: const LawyerDirectoryPage(),
-        ),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final specialty = extra['specialty'] as String?;
+          return BlocProvider(
+            create: (_) => sl<LawyersCubit>(),
+            child: LawyerDirectoryPage(initialSpecialty: specialty),
+          );
+        },
       ),
       GoRoute(
         path: '/lawyers/:id',

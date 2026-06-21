@@ -29,6 +29,8 @@ class ChatIACubit extends Cubit<ChatIAState> {
 
     final bool? currentNeedsLawyer =
         state is ChatIALoaded ? (state as ChatIALoaded).lastNeedsLawyer : null;
+    final String? currentSpecialty =
+        state is ChatIALoaded ? (state as ChatIALoaded).lastSpecialty : null;
 
     // 1. Agrega el mensaje del usuario.
     final userMessage = AIMessage(
@@ -52,6 +54,7 @@ class ChatIACubit extends Cubit<ChatIAState> {
     emit(ChatIALoaded(
       messages: List.unmodifiable(currentMessages),
       lastNeedsLawyer: currentNeedsLawyer,
+      lastSpecialty: currentSpecialty,
     ));
 
     // 3. Recarga la configuración (puede haber cambiado desde el admin).
@@ -83,6 +86,7 @@ class ChatIACubit extends Cubit<ChatIAState> {
       emit(ChatIALoaded(
         messages: List.unmodifiable(updatedMessages),
         lastNeedsLawyer: aiResponse.needsLawyer,
+        lastSpecialty: aiResponse.specialty,
       ));
     } else {
       emit(ChatIAError(

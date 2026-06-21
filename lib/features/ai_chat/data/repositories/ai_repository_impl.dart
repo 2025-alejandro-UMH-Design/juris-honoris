@@ -43,7 +43,8 @@ class AIRepositoryImpl implements AIRepository {
       final raw = '${res.data['response']}'
           '${res.data['needs_lawyer'] == true ? ' [NECESITA_ABOGADO: SI]' : res.data['needs_lawyer'] == false ? ' [NECESITA_ABOGADO: NO]' : ''}';
 
-      return Result.success(AIResponse.fromRaw(raw));
+      final specialty = res.data['specialty'] as String?;
+      return Result.success(AIResponse.fromRaw(raw, specialty: specialty));
     } on DioException catch (e) {
       final msg = e.response?.data?['error'] ?? 'Error de conexión con el servidor';
       return Result.failure(msg.toString());

@@ -24,13 +24,17 @@ final class ChatIALoaded extends ChatIAState {
   /// null si la IA aún no respondió, true/false según la última respuesta.
   final bool? lastNeedsLawyer;
 
+  /// Especialidad jurídica detectada por la IA (solo cuando lastNeedsLawyer == true).
+  final String? lastSpecialty;
+
   const ChatIALoaded({
     required this.messages,
     this.lastNeedsLawyer,
+    this.lastSpecialty,
   });
 
   @override
-  List<Object?> get props => [messages, lastNeedsLawyer];
+  List<Object?> get props => [messages, lastNeedsLawyer, lastSpecialty];
 }
 
 /// Estado de error — conserva los mensajes anteriores para no limpiar el chat.

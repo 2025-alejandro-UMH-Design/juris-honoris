@@ -6,7 +6,6 @@ import 'package:juris_honoris/core/constants/app_sizes.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:juris_honoris/shared/widgets/app_card.dart';
 
-import 'accept_reject_case_page.dart';
 import 'lawyer_marketplace_page.dart';
 import 'lawyer_chat_page.dart';
 import 'lawyer_profile_edit_page.dart';
@@ -347,14 +346,12 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color iconColor;
-  final String suffix;
 
   const _StatCard({
     required this.label,
     required this.value,
     required this.icon,
     required this.iconColor,
-    this.suffix = '',
   });
 
   @override
@@ -375,7 +372,7 @@ class _StatCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$value$suffix',
+                value,
                 style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

@@ -6,6 +6,7 @@ const { requireAuth } = require('../middleware/auth');
 const DEFAULT_PROMPT = `Eres Juris, el asistente legal oficial de Juris Honoris, especializado en el sistema jurídico de Honduras.
 Responde siempre en español claro. Al final de CADA respuesta incluye:
 [NECESITA_ABOGADO: SI] o [NECESITA_ABOGADO: NO] según corresponda.
+Si incluyes [NECESITA_ABOGADO: SI], agrega también [ESPECIALIDAD: X] donde X es exactamente una de: Familia, Penal, Laboral, Mercantil, Civil, Constitucional, Administrativo.
 IMPORTANTE: No proporcionas representación legal, solo orientación informativa.`;
 
 async function getSystemPrompt() {
@@ -88,11 +89,15 @@ router.post('/message', requireAuth, async (req, res) => {
       ? false
       : null;
 
+    const specialtyMatch = rawText.match(/\[ESPECIALIDAD: ([^\]]+)\]/);
+    const specialty = specialtyMatch ? specialtyMatch[1].trim() : null;
+
     const cleanText = rawText
       .replace(/\[NECESITA_ABOGADO: (SI|NO)\]/g, '')
+      .replace(/\[ESPECIALIDAD: [^\]]+\]/g, '')
       .trim();
 
-    res.json({ response: cleanText, needs_lawyer: needsLawyer });
+    res.json({ response: cleanText, needs_lawyer: needsLawyer, specialty });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

@@ -14,11 +14,13 @@ import 'package:juris_honoris/injection_container.dart';
 class AIResultPage extends StatefulWidget {
   final String consultaSummary;
   final bool needsLawyer;
+  final String? specialty;
 
   const AIResultPage({
     super.key,
     required this.consultaSummary,
     required this.needsLawyer,
+    this.specialty,
   });
 
   @override
@@ -164,7 +166,8 @@ class _AIResultPageState extends State<AIResultPage> {
                   variant: ButtonVariant.primary,
                   isLoading: _isCreating,
                   onPressed: widget.needsLawyer
-                      ? () => context.go('/lawyers')
+                      ? () => context.go('/lawyers',
+                            extra: {'specialty': widget.specialty})
                       : _handleCreateHito,
                 ),
                 const SizedBox(height: AppSizes.md),
@@ -179,7 +182,8 @@ class _AIResultPageState extends State<AIResultPage> {
                       : Icons.folder_open_outlined,
                   variant: ButtonVariant.secondary,
                   onPressed: widget.needsLawyer
-                      ? () => context.go('/lawyers')
+                      ? () => context.go('/lawyers',
+                            extra: {'specialty': widget.specialty})
                       : _openDocGuide,
                 ),
                 const SizedBox(height: AppSizes.xl),

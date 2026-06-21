@@ -204,19 +204,23 @@ class _ChatIAPageState extends State<ChatIAPage> {
           final List<AIMessage> messages;
           final bool isTyping;
           final bool? lastNeedsLawyer;
+          final String? lastSpecialty;
 
           if (state is ChatIALoaded) {
             messages = state.messages;
             isTyping = state.messages.any((m) => m.isLoading);
             lastNeedsLawyer = state.lastNeedsLawyer;
+            lastSpecialty = state.lastSpecialty;
           } else if (state is ChatIAError) {
             messages = state.previousMessages;
             isTyping = false;
             lastNeedsLawyer = null;
+            lastSpecialty = null;
           } else {
             messages = const [];
             isTyping = false;
             lastNeedsLawyer = null;
+            lastSpecialty = null;
           }
 
           // ── All messages including the static welcome ──────────────
@@ -277,6 +281,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
                         context,
                         needsLawyer: true,
                         summary: summary,
+                        specialty: lastSpecialty,
                       );
                     }
                   },
@@ -284,6 +289,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
                     context,
                     needsLawyer: lastNeedsLawyer!,
                     summary: messages.isNotEmpty ? messages.last.content : '',
+                    specialty: lastSpecialty,
                   ),
                 ),
 
@@ -327,6 +333,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
     BuildContext context, {
     required bool needsLawyer,
     required String summary,
+    String? specialty,
   }) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -335,6 +342,7 @@ class _ChatIAPageState extends State<ChatIAPage> {
           child: AIResultPage(
             consultaSummary: summary,
             needsLawyer: needsLawyer,
+            specialty: specialty,
           ),
         ),
       ),

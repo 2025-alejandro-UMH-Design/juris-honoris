@@ -7,7 +7,8 @@ import '../bloc/lawyers_cubit.dart';
 import 'lawyer_profile_page.dart';
 
 class LawyerDirectoryPage extends StatefulWidget {
-  const LawyerDirectoryPage({super.key});
+  final String? initialSpecialty;
+  const LawyerDirectoryPage({super.key, this.initialSpecialty});
 
   @override
   State<LawyerDirectoryPage> createState() => _LawyerDirectoryPageState();
@@ -15,15 +16,19 @@ class LawyerDirectoryPage extends StatefulWidget {
 
 class _LawyerDirectoryPageState extends State<LawyerDirectoryPage> {
   final _searchController = TextEditingController();
-  String _filterSpec = 'Todos';
+  late String _filterSpec;
   String _query = '';
   List<LawyerData> _lawyers = const [];
 
-  final _specs = ['Todos', 'Familia', 'Penal', 'Laboral', 'Mercantil'];
+  final _specs = ['Todos', 'Familia', 'Penal', 'Laboral', 'Mercantil', 'Civil', 'Constitucional', 'Administrativo'];
 
   @override
   void initState() {
     super.initState();
+    _filterSpec = (widget.initialSpecialty != null &&
+            _specs.contains(widget.initialSpecialty))
+        ? widget.initialSpecialty!
+        : 'Todos';
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<LawyersCubit>().loadLawyers();
     });
