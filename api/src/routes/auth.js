@@ -148,6 +148,45 @@ router.put('/change-password', requireAuth, async (req, res) => {
   res.json({ message: 'Contraseña actualizada' });
 });
 
+// POST /api/auth/register-lawyer  — abogado se registra (queda pendiente de verificación)
+router.post('/register-lawyer', async (req, res) => {
+  const { email, password, full_name, phone, dni, colegiacion_number, experience_years, city, specialties } = req.body;
+  if (!email || !password || !full_name) {
+    return res.status(400).json({ error: 'email, password y full_name son requeridos' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+  }
+
+  const exists = await db.query('select id from users where email = $1', [email.toLowerCase().trim()]);
+  if (exists.rows.length) return res.status(409).json({ error: 'Email ya registrado' });
+
+  const hash = await bcrypt.hash(password, 10);
+  const userRes = await db.query(
+    `insert into users (email, password_hash, full_name, phone, dni, role, plan, is_verified, auth_provider)
+     values ($1, $2, $3, $4, $5, 'lawyer', 'free', false, 'email') returning id`,
+    [email.toLowerCase().trim(), hash, full_name.trim(), phone?.trim() || null, dni?.trim() || null]
+  );
+  const lawyerId = userRes.rows[0].id;
+
+  await db.query(
+    `insert into lawyer_profiles (id, colegiacion_number, experience_years, city)
+     values ($1, $2, $3, $4)`,
+    [lawyerId, colegiacion_number?.trim() || null, experience_years ? parseInt(experience_years) : 0, city || null]
+  );
+
+  if (Array.isArray(specialties) && specialties.length > 0) {
+    for (const s of specialties) {
+      await db.query(
+        'insert into lawyer_specialties (lawyer_id, specialty) values ($1, $2) on conflict do nothing',
+        [lawyerId, s]
+      );
+    }
+  }
+
+  res.status(201).json({ message: 'Solicitud enviada. Un administrador revisará tu perfil en los próximos días.' });
+});
+
 function sanitize(user) {
   const { password_hash, ...rest } = user;
   return rest;

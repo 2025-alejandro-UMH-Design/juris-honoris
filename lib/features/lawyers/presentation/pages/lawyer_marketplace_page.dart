@@ -1,51 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:juris_honoris/core/constants/api_config.dart';
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
+import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/shared/widgets/app_card.dart';
 
 import 'accept_reject_case_page.dart';
-
-const _mockCases = [
-  {
-    'id': 'c1',
-    'title': 'Divorcio por mutuo acuerdo',
-    'type': 'Derecho de Familia',
-    'clientName': 'Juan G.',
-    'date': '2026-05-27',
-    'urgency': 'normal',
-    'description':
-        'Pareja desea separarse de mutuo acuerdo. Tienen 2 hijos menores. Necesitan acuerdo de custodia y pensión alimenticia.',
-  },
-  {
-    'id': 'c2',
-    'title': 'Demanda por despido injustificado',
-    'type': 'Derecho Laboral',
-    'clientName': 'María L.',
-    'date': '2026-05-26',
-    'urgency': 'urgent',
-    'description':
-        'Trabajadora despedida sin causa justificada después de 5 años. Solicita liquidación y daños.',
-  },
-  {
-    'id': 'c3',
-    'title': 'Proceso de herencia',
-    'type': 'Derecho Civil',
-    'clientName': 'Carlos R.',
-    'date': '2026-05-25',
-    'urgency': 'normal',
-    'description': 'Sucesión testamentaria de bienes inmuebles. 3 herederos.',
-  },
-  {
-    'id': 'c4',
-    'title': 'Revisión contrato comercial',
-    'type': 'Derecho Mercantil',
-    'clientName': 'Ana M.',
-    'date': '2026-05-24',
-    'urgency': 'normal',
-    'description':
-        'Contrato de distribución exclusiva. Necesita revisión de cláusulas y asesoría.',
-  },
-];
 
 const _filterOptions = [
   'Todos',
@@ -67,6 +28,15 @@ class _LawyerMarketplacePageState extends State<LawyerMarketplacePage> {
   final _searchController = TextEditingController();
   String _selectedFilter = 'Todos';
   String _searchQuery = '';
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _requests = [];
+  String? _errorMsg;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRequests();
+  }
 
   @override
   void dispose() {
@@ -74,17 +44,41 @@ class _LawyerMarketplacePageState extends State<LawyerMarketplacePage> {
     super.dispose();
   }
 
+  Future<void> _loadRequests() async {
+    setState(() { _isLoading = true; _errorMsg = null; });
+    try {
+      final dio = sl<Dio>();
+      final res = await dio.get(ApiConfig.requests, queryParameters: {'status': 'pending'});
+      if (!mounted) return;
+      setState(() {
+        _requests = (res.data as List).map<Map<String, dynamic>>((r) => {
+          'id': r['id'],
+          'title': (r['case_title'] as String?)?.isNotEmpty == true
+              ? r['case_title']
+              : r['case_type'] ?? 'Solicitud legal',
+          'type': r['case_type'] ?? '',
+          'clientName': r['client_name'] ?? 'Cliente',
+          'date': (r['created_at'] as String? ?? '').length >= 10
+              ? (r['created_at'] as String).substring(0, 10)
+              : '',
+          'urgency': r['urgency'] ?? 'normal',
+          'description': r['description'] ?? '',
+        }).toList();
+        _isLoading = false;
+      });
+    } on DioException catch (_) {
+      if (mounted) setState(() { _isLoading = false; _errorMsg = 'Error al cargar solicitudes'; });
+    }
+  }
+
   List<Map<String, dynamic>> get _filteredCases {
-    return _mockCases.where((c) {
+    return _requests.where((c) {
+      final type = (c['type'] as String).toLowerCase();
       final matchesFilter = _selectedFilter == 'Todos' ||
-          (c['type'] as String).contains(_selectedFilter);
+          type.contains(_selectedFilter.toLowerCase());
       final matchesSearch = _searchQuery.isEmpty ||
-          (c['title'] as String)
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase()) ||
-          (c['type'] as String)
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase());
+          (c['title'] as String).toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          type.contains(_searchQuery.toLowerCase());
       return matchesFilter && matchesSearch;
     }).toList();
   }
@@ -105,12 +99,8 @@ class _LawyerMarketplacePageState extends State<LawyerMarketplacePage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list, color: AppColors.primaryBlue),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Filtros avanzados próximamente')),
-              );
-            },
+            icon: const Icon(Icons.refresh, color: AppColors.primaryBlue),
+            onPressed: _loadRequests,
           ),
         ],
       ),
@@ -210,16 +200,23 @@ class _LawyerMarketplacePageState extends State<LawyerMarketplacePage> {
 
           // ── Case list ──────────────────────────────────────────
           Expanded(
-            child: _filteredCases.isEmpty
-                ? const _EmptyState()
-                : ListView.separated(
-                    padding: const EdgeInsets.all(AppSizes.pagePadding),
-                    itemCount: _filteredCases.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: AppSizes.sm),
-                    itemBuilder: (_, i) =>
-                        _CaseCard(caseData: _filteredCases[i]),
-                  ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMsg != null
+                    ? _ErrorState(message: _errorMsg!, onRetry: _loadRequests)
+                    : _filteredCases.isEmpty
+                        ? const _EmptyState()
+                        : RefreshIndicator(
+                            onRefresh: _loadRequests,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.all(AppSizes.pagePadding),
+                              itemCount: _filteredCases.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: AppSizes.sm),
+                              itemBuilder: (_, i) =>
+                                  _CaseCard(caseData: _filteredCases[i]),
+                            ),
+                          ),
           ),
         ],
       ),
@@ -245,7 +242,6 @@ class _CaseCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -263,8 +259,6 @@ class _CaseCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSizes.sm),
-
-          // Type chip + client
           Row(
             children: [
               _TypeChip(label: caseData['type'] as String),
@@ -280,8 +274,6 @@ class _CaseCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSizes.xs),
-
-          // Date
           Row(
             children: [
               const Icon(Icons.calendar_today_outlined,
@@ -295,8 +287,6 @@ class _CaseCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSizes.sm),
-
-          // Description (2 lines max)
           Text(
             caseData['description'] as String,
             maxLines: 2,
@@ -305,8 +295,6 @@ class _CaseCard extends StatelessWidget {
                 fontSize: 13, color: AppColors.greyMedium, height: 1.4),
           ),
           const SizedBox(height: AppSizes.sm),
-
-          // View button
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
@@ -388,10 +376,10 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off_outlined, size: 56, color: AppColors.greyLight),
+          Icon(Icons.inbox_outlined, size: 56, color: AppColors.greyLight),
           SizedBox(height: AppSizes.md),
           Text(
-            'No se encontraron casos',
+            'Sin solicitudes pendientes',
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -399,9 +387,33 @@ class _EmptyState extends StatelessWidget {
           ),
           SizedBox(height: AppSizes.sm),
           Text(
-            'Intenta con otro filtro o búsqueda',
+            'Cuando un cliente te envíe una solicitud aparecerá aquí',
             style: TextStyle(fontSize: 13, color: AppColors.subtitleGrey),
+            textAlign: TextAlign.center,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: AppColors.greyLight),
+          const SizedBox(height: AppSizes.md),
+          Text(message,
+              style: const TextStyle(fontSize: 14, color: AppColors.greyMedium)),
+          const SizedBox(height: AppSizes.md),
+          TextButton(onPressed: onRetry, child: const Text('Reintentar')),
         ],
       ),
     );

@@ -104,6 +104,30 @@ app.listen(PORT, '0.0.0.0', async () => {
       ALTER TABLE users
         ADD COLUMN IF NOT EXISTS solicitations_reset_at TIMESTAMPTZ
     `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS lawyer_profiles (
+        id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        colegiacion_number VARCHAR(100),
+        experience_years INT NOT NULL DEFAULT 0,
+        about TEXT,
+        city VARCHAR(100),
+        hourly_rate NUMERIC(10,2),
+        rating NUMERIC(3,2) NOT NULL DEFAULT 0,
+        total_cases INT NOT NULL DEFAULT 0,
+        avail_weekdays BOOLEAN NOT NULL DEFAULT false,
+        avail_weekends BOOLEAN NOT NULL DEFAULT false,
+        avail_urgent BOOLEAN NOT NULL DEFAULT false,
+        verification_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS lawyer_specialties (
+        lawyer_id UUID NOT NULL REFERENCES lawyer_profiles(id) ON DELETE CASCADE,
+        specialty VARCHAR(100) NOT NULL,
+        PRIMARY KEY (lawyer_id, specialty)
+      )
+    `);
     console.log(`✓ Juris Honoris API corriendo`);
     console.log(`  Local:    http://localhost:${PORT}/api/health`);
     console.log(`  Red:      http://192.168.1.94:${PORT}/api/health  ← usar en el celular`);

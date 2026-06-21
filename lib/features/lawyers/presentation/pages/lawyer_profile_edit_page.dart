@@ -1,6 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:juris_honoris/core/constants/api_config.dart';
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
+import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/shared/widgets/app_button.dart';
 import 'package:juris_honoris/shared/widgets/app_card.dart';
 
@@ -32,18 +37,46 @@ class LawyerProfileEditPage extends StatefulWidget {
 class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Mock pre-filled data
-  final _nombreController = TextEditingController(text: 'Carlos Mendoza López');
-  final _telefonoController = TextEditingController(text: '+504 9876-5432');
-  final _bioController = TextEditingController(
-    text:
-        'Abogado con 8 años de experiencia en derecho de familia y civil. Especialista en mediación y resolución de conflictos.',
-  );
-  final _tarifaController = TextEditingController(text: '750');
+  final _nombreController = TextEditingController();
+  final _telefonoController = TextEditingController();
+  final _bioController = TextEditingController();
+  final _tarifaController = TextEditingController();
 
-  String? _selectedCity = 'Tegucigalpa';
-  final Set<String> _selectedSpecialties = {'Familia', 'Civil'};
+  String? _selectedCity;
+  final Set<String> _selectedSpecialties = {};
   bool _isSaving = false;
+  bool _isLoadingProfile = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final user = context.read<AuthCubit>().currentUser;
+    _nombreController.text = user?.name ?? '';
+    try {
+      final dio = sl<Dio>();
+      final res = await dio.get('${ApiConfig.lawyers}/me/profile');
+      if (!mounted) return;
+      final data = res.data as Map<String, dynamic>;
+      _telefonoController.text = '';
+      _bioController.text = data['about'] as String? ?? '';
+      _tarifaController.text = data['hourly_rate']?.toString() ?? '';
+      final city = data['city'] as String?;
+      if (city != null && _cities.contains(city)) _selectedCity = city;
+      final specs = data['specialties'];
+      if (specs is List) {
+        _selectedSpecialties
+          ..clear()
+          ..addAll(specs.cast<String>());
+      }
+    } catch (_) {
+      // profile may not exist yet — leave fields empty
+    }
+    if (mounted) setState(() => _isLoadingProfile = false);
+  }
 
   @override
   void dispose() {
@@ -54,10 +87,24 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
     super.dispose();
   }
 
-  void _saveChanges() {
+  Future<void> _saveChanges() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _isSaving = true);
-    Future.delayed(const Duration(milliseconds: 800), () {
+    try {
+      final dio = sl<Dio>();
+      await Future.wait([
+        dio.put('${ApiConfig.auth}/me', data: {
+          'full_name': _nombreController.text.trim(),
+          if (_telefonoController.text.trim().isNotEmpty)
+            'phone': _telefonoController.text.trim(),
+        }),
+        dio.put('${ApiConfig.lawyers}/me/profile', data: {
+          'about': _bioController.text.trim(),
+          'city': _selectedCity,
+          'hourly_rate': double.tryParse(_tarifaController.text.trim()),
+          'specialties': _selectedSpecialties.toList(),
+        }),
+      ]);
       if (!mounted) return;
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -74,7 +121,14 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
-    });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      final msg = (e.response?.data as Map<String, dynamic>?)?['error'] ?? 'Error al guardar';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: AppColors.errorRed),
+      );
+    }
   }
 
   @override
@@ -93,7 +147,9 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: _isLoadingProfile
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(AppSizes.pagePadding),
         child: Form(
           key: _formKey,
@@ -334,7 +390,7 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
               // ── Save button ────────────────────────────────────
               AppButton(
                 label: 'Guardar cambios',
-                onPressed: _isSaving ? null : _saveChanges,
+                onPressed: _isSaving ? null : () { _saveChanges(); },
                 isLoading: _isSaving,
                 icon: Icons.save_outlined,
               ),

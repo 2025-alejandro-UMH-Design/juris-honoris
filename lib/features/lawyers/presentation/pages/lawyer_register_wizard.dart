@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:juris_honoris/core/constants/api_config.dart';
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
+import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/shared/widgets/app_button.dart';
 import 'package:juris_honoris/shared/widgets/app_card.dart';
 
@@ -54,6 +57,7 @@ class _LawyerRegisterWizardState extends State<LawyerRegisterWizard> {
 
   // Step 6
   bool _acceptedTerms = false;
+  bool _isLoading = false;
 
   final List<String> _cities = [
     'Tegucigalpa',
@@ -100,7 +104,35 @@ class _LawyerRegisterWizardState extends State<LawyerRegisterWizard> {
     }
   }
 
-  void _submit() => setState(() => _submitted = true);
+  Future<void> _submit() async {
+    setState(() => _isLoading = true);
+    try {
+      final dio = sl<Dio>();
+      await dio.post(
+        '${ApiConfig.auth}/register-lawyer',
+        data: {
+          'email': _emailController.text.trim().toLowerCase(),
+          'password': _passwordController.text,
+          'full_name': _nombreController.text.trim(),
+          'phone': _telefonoController.text.trim(),
+          'dni': _dniController.text.trim(),
+          'colegiacion_number': _colegiacionController.text.trim(),
+          'experience_years': int.tryParse(_experienciaController.text.trim()) ?? 0,
+          'city': _selectedCity,
+          'specialties': _selectedSpecialties.toList(),
+        },
+      );
+      if (!mounted) return;
+      setState(() { _isLoading = false; _submitted = true; });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      final msg = (e.response?.data as Map<String, dynamic>?)?['error'] ?? 'Error al registrar. Intenta de nuevo.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: AppColors.errorRed),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +251,7 @@ class _LawyerRegisterWizardState extends State<LawyerRegisterWizard> {
                 : 'L. ${_tarifaController.text}',
             acceptedTerms: _acceptedTerms,
             onTermsChanged: (v) => setState(() => _acceptedTerms = v ?? false),
-            onSubmit: _acceptedTerms ? _submit : null,
+            onSubmit: _acceptedTerms && !_isLoading ? () { _submit(); } : null,
           ),
         ],
       ),

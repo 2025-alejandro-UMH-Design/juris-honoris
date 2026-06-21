@@ -1,11 +1,15 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:juris_honoris/core/constants/api_config.dart';
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/shared/widgets/app_card.dart';
 
+import 'accept_reject_case_page.dart';
 import 'lawyer_marketplace_page.dart';
 import 'lawyer_chat_page.dart';
 import 'lawyer_profile_edit_page.dart';
@@ -96,8 +100,45 @@ class _LawyerBottomNav extends StatelessWidget {
 
 // ── Home tab ───────────────────────────────────────────────────────────────────
 
-class _DashboardHome extends StatelessWidget {
+class _DashboardHome extends StatefulWidget {
   const _DashboardHome();
+
+  @override
+  State<_DashboardHome> createState() => _DashboardHomeState();
+}
+
+class _DashboardHomeState extends State<_DashboardHome> {
+  List<Map<String, dynamic>> _pending = [];
+  int _totalCases = 0;
+  double _rating = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final dio = sl<Dio>();
+      final results = await Future.wait([
+        dio.get(ApiConfig.requests, queryParameters: {'status': 'pending'}),
+        dio.get('${ApiConfig.lawyers}/me/profile'),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _pending = List<Map<String, dynamic>>.from(results[0].data as List);
+        final profile = results[1].data as Map<String, dynamic>;
+        _totalCases = (profile['total_cases'] as num?)?.toInt() ?? 0;
+        _rating = (profile['rating'] as num?)?.toDouble() ?? 0;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   String _initials(String name) {
     final parts = name.trim().split(' ');
@@ -141,78 +182,176 @@ class _DashboardHome extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.pagePadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Welcome card ──────────────────────────────────────
-            _WelcomeCard(name: displayName),
-            const SizedBox(height: AppSizes.lg),
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSizes.pagePadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _WelcomeCard(name: displayName),
+              const SizedBox(height: AppSizes.lg),
 
-            // ── Stats grid ────────────────────────────────────────
-            const Text(
-              'Resumen',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.greyDark),
-            ),
-            const SizedBox(height: AppSizes.sm),
-            _StatsGrid(),
-            const SizedBox(height: AppSizes.lg),
+              const Text(
+                'Resumen',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.greyDark),
+              ),
+              const SizedBox(height: AppSizes.sm),
+              _isLoading
+                  ? const SizedBox(
+                      height: 120,
+                      child: Center(child: CircularProgressIndicator()))
+                  : _StatsGrid(
+                      pendingCount: _pending.length,
+                      totalCases: _totalCases,
+                      rating: _rating,
+                    ),
+              const SizedBox(height: AppSizes.lg),
 
-            // ── New requests (placeholder) ────────────────────────
-            Row(
+              Row(
+                children: [
+                  const Text(
+                    'Nuevas solicitudes',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.greyDark),
+                  ),
+                  const SizedBox(width: AppSizes.sm),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _pending.isEmpty
+                          ? AppColors.greyLight
+                          : AppColors.errorRed,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_pending.length}',
+                      style: TextStyle(
+                          color: _pending.isEmpty
+                              ? AppColors.greyDark
+                              : AppColors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSizes.sm),
+              if (_isLoading)
+                const _EmptySection(
+                    icon: Icons.inbox_outlined,
+                    message: 'Cargando solicitudes...')
+              else if (_pending.isEmpty)
+                const _EmptySection(
+                  icon: Icons.inbox_outlined,
+                  message: 'No tienes solicitudes pendientes',
+                )
+              else
+                ..._pending.take(3).map((r) => Padding(
+                      padding: const EdgeInsets.only(bottom: AppSizes.sm),
+                      child: _PendingRequestCard(data: r),
+                    )),
+              const SizedBox(height: AppSizes.lg),
+
+              const Text(
+                'Estadísticas',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.greyDark),
+              ),
+              const SizedBox(height: AppSizes.sm),
+              _EmptySection(
+                icon: Icons.folder_open_outlined,
+                message: _totalCases == 0
+                    ? 'Sin casos registrados aún'
+                    : 'Total: $_totalCases casos',
+              ),
+              const SizedBox(height: AppSizes.xl),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PendingRequestCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _PendingRequestCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final isUrgent = data['urgency'] == 'urgent';
+    final mapped = {
+      'id': data['id'],
+      'title': (data['case_title'] as String?)?.isNotEmpty == true
+          ? data['case_title']
+          : data['case_type'] ?? 'Solicitud',
+      'type': data['case_type'] ?? '',
+      'clientName': data['client_name'] ?? 'Cliente',
+      'date': (data['created_at'] as String? ?? '').length >= 10
+          ? (data['created_at'] as String).substring(0, 10)
+          : '',
+      'urgency': data['urgency'] ?? 'normal',
+      'description': data['description'] ?? '',
+    };
+    return AppCard(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AcceptRejectCasePage(caseData: mapped),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Nuevas solicitudes',
-                  style: TextStyle(
-                      fontSize: 16,
+                Text(
+                  mapped['title'] as String,
+                  style: const TextStyle(
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: AppColors.greyDark),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: AppSizes.sm),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.errorRed,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    '0',
-                    style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold),
-                  ),
+                const SizedBox(height: 4),
+                Text(
+                  'Cliente: ${mapped['clientName']}',
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.subtitleGrey),
                 ),
               ],
             ),
-            const SizedBox(height: AppSizes.sm),
-            const _EmptySection(
-              icon: Icons.inbox_outlined,
-              message: 'No tienes solicitudes pendientes',
+          ),
+          const SizedBox(width: AppSizes.sm),
+          if (isUrgent)
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.errorRed,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text('Urgente',
+                  style: TextStyle(
+                      fontSize: 10,
+                      color: AppColors.white,
+                      fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(height: AppSizes.lg),
-
-            // ── Active cases (placeholder) ────────────────────────
-            const Text(
-              'Casos activos',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.greyDark),
-            ),
-            const SizedBox(height: AppSizes.sm),
-            const _EmptySection(
-              icon: Icons.folder_open_outlined,
-              message: 'No tienes casos activos',
-            ),
-            const SizedBox(height: AppSizes.xl),
-          ],
-        ),
+          const SizedBox(width: AppSizes.sm),
+          const Icon(Icons.arrow_forward_ios,
+              size: 14, color: AppColors.primaryBlue),
+        ],
       ),
     );
   }
@@ -302,6 +441,16 @@ class _WelcomeCard extends StatelessWidget {
 }
 
 class _StatsGrid extends StatelessWidget {
+  final int pendingCount;
+  final int totalCases;
+  final double rating;
+
+  const _StatsGrid({
+    required this.pendingCount,
+    required this.totalCases,
+    required this.rating,
+  });
+
   @override
   Widget build(BuildContext context) {
     return GridView.count(
@@ -311,28 +460,28 @@ class _StatsGrid extends StatelessWidget {
       crossAxisSpacing: AppSizes.sm,
       mainAxisSpacing: AppSizes.sm,
       childAspectRatio: 1.6,
-      children: const [
+      children: [
         _StatCard(
-          label: 'Casos activos',
-          value: '0',
-          icon: Icons.folder_open_outlined,
+          label: 'Solicitudes',
+          value: '$pendingCount',
+          icon: Icons.inbox_outlined,
           iconColor: AppColors.primaryBlue,
         ),
         _StatCard(
           label: 'Casos total',
-          value: '0',
+          value: '$totalCases',
           icon: Icons.folder_copy_outlined,
           iconColor: AppColors.secondaryOrange,
         ),
         _StatCard(
           label: 'Rating',
-          value: '-',
+          value: rating > 0 ? rating.toStringAsFixed(1) : '-',
           icon: Icons.star_outline,
           iconColor: AppColors.secondaryOrange,
         ),
-        _StatCard(
+        const _StatCard(
           label: 'Ingresos mes',
-          value: 'L. 0',
+          value: 'N/A',
           icon: Icons.account_balance_wallet_outlined,
           iconColor: AppColors.successGreen,
         ),
