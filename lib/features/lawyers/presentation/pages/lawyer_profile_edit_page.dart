@@ -56,12 +56,12 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
   Future<void> _loadProfile() async {
     final user = context.read<AuthCubit>().currentUser;
     _nombreController.text = user?.name ?? '';
+    _telefonoController.text = user?.phone ?? '';
     try {
       final dio = sl<Dio>();
       final res = await dio.get('${ApiConfig.lawyers}/me/profile');
       if (!mounted) return;
       final data = res.data as Map<String, dynamic>;
-      _telefonoController.text = '';
       _bioController.text = data['about'] as String? ?? '';
       _tarifaController.text = data['hourly_rate']?.toString() ?? '';
       final city = data['city'] as String?;

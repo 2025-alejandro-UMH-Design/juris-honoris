@@ -145,6 +145,14 @@ GoRouter createRouter(AuthCubit authCubit) {
           return Routes.home;
         }
       }
+      // Lawyer trying to access client-only routes → go to lawyer dashboard
+      if (authState is AuthAuthenticated &&
+          authState.user.role == UserRole.lawyer) {
+        const clientRoutes = ['/home', '/chat-ia', '/tasks', '/dossier', '/profile', '/lawyers', '/chat/'];
+        if (clientRoutes.any((r) => loc.startsWith(r))) {
+          return Routes.lawyerDashboard;
+        }
+      }
       return null;
     },
     routes: [

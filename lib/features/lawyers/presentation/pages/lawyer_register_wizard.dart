@@ -105,6 +105,18 @@ class _LawyerRegisterWizardState extends State<LawyerRegisterWizard> {
   }
 
   Future<void> _submit() async {
+    if (_selectedCity == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecciona una ciudad'), backgroundColor: AppColors.errorRed),
+      );
+      return;
+    }
+    if (_selectedSpecialties.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecciona al menos una especialidad'), backgroundColor: AppColors.errorRed),
+      );
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final dio = sl<Dio>();

@@ -72,9 +72,9 @@ class AcceptRejectCasePage extends StatelessWidget {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
                       builder: (_) => LawyerChatPage(
-                        clientName: caseData['clientName'] as String,
-                        caseType: caseData['type'] as String,
-                        caseId: caseData['id'] as String,
+                        clientName: (caseData['clientName'] as String?) ?? 'Cliente',
+                        caseType: (caseData['type'] as String?) ?? 'Caso legal',
+                        caseId: (caseData['id'] as String?) ?? '',
                       ),
                     ),
                   );
@@ -258,7 +258,7 @@ class AcceptRejectCasePage extends StatelessWidget {
                   // Type chip + urgency
                   Row(
                     children: [
-                      _TypeChip(label: caseData['type'] as String),
+                      _TypeChip(label: (caseData['type'] as String?) ?? 'Legal'),
                       const SizedBox(width: AppSizes.sm),
                       _UrgencyBadge(isUrgent: isUrgent),
                     ],
@@ -267,7 +267,7 @@ class AcceptRejectCasePage extends StatelessWidget {
 
                   // Title
                   Text(
-                    caseData['title'] as String,
+                    (caseData['title'] as String?) ?? 'Solicitud legal',
                     style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -300,7 +300,7 @@ class AcceptRejectCasePage extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSizes.sm),
                   Text(
-                    caseData['description'] as String,
+                    (caseData['description'] as String?) ?? '',
                     style: const TextStyle(
                         fontSize: 14, color: AppColors.greyDark, height: 1.6),
                   ),
