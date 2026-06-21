@@ -171,8 +171,8 @@ router.post('/register-lawyer', async (req, res) => {
   const lawyerId = userRes.rows[0].id;
 
   await db.query(
-    `insert into lawyer_profiles (id, colegiacion_number, experience_years, city)
-     values ($1, $2, $3, $4)`,
+    `insert into lawyer_profiles (id, colegiacion_number, experience_years, city, verification_status)
+     values ($1, $2, $3, $4, 'approved')`,
     [lawyerId, colegiacion_number?.trim() || null, experience_years ? parseInt(experience_years) : 0, city || null]
   );
 
@@ -185,7 +185,33 @@ router.post('/register-lawyer', async (req, res) => {
     }
   }
 
-  res.status(201).json({ message: 'Solicitud enviada. Un administrador revisará tu perfil en los próximos días.' });
+  const token = jwt.sign(
+    { id: lawyerId, email: email.toLowerCase().trim(), role: 'lawyer' },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+  const userRow = await db.query('select * from users where id = $1', [lawyerId]);
+  res.status(201).json({ token, user: sanitize(userRow.rows[0]) });
+});
+
+// POST /api/auth/seed-approve  — aprueba abogados de prueba (demo universitario)
+router.post('/seed-approve', async (req, res) => {
+  const emails = req.body.emails;
+  if (!Array.isArray(emails)) return res.status(400).json({ error: 'emails[] requerido' });
+  const results = [];
+  for (const email of emails) {
+    const user = await db.query('select id from users where email = $1', [email.toLowerCase()]);
+    if (user.rows[0]) {
+      await db.query(
+        "update lawyer_profiles set verification_status = 'approved' where id = $1",
+        [user.rows[0].id]
+      );
+      results.push({ email, approved: true });
+    } else {
+      results.push({ email, approved: false, error: 'not found' });
+    }
+  }
+  res.json({ results });
 });
 
 function sanitize(user) {
