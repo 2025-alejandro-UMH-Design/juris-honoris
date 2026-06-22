@@ -63,6 +63,7 @@ app.use('/api/reviews',       require('./routes/reviews'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/admin',          require('./routes/admin'));
 app.use('/api/admin/ai-config', require('./routes/ai-config'));
+app.use('/api/upload',          require('./routes/upload'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', async (_req, res) => {
@@ -132,6 +133,9 @@ app.listen(PORT, '0.0.0.0', async () => {
     `);
     await db.query(`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS fcm_token TEXT
+    `);
+    await db.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT
     `);
     console.log(`✓ Juris Honoris API corriendo`);
     console.log(`  Local:    http://localhost:${PORT}/api/health`);
