@@ -226,41 +226,52 @@ router.get('/requests', ...guard, async (req, res) => {
   res.json(rows);
 });
 
-// GET /api/admin/storage  — archivos almacenados en Cloudinary por tipo
+// GET /api/admin/storage  — estadísticas de almacenamiento por usuario (sin exponer contenido)
 router.get('/storage', ...guard, async (req, res) => {
   const cloudinary = require('../cloudinary');
+
+  // Solo métricas de cuenta Cloudinary — sin listar archivos ni exponer URLs
+  let cloudinaryUsage = { storage_used: 0, storage_limit: 0, bandwidth_used: 0, plan: 'Free' };
   try {
-    const [imgRes, rawRes, usage] = await Promise.all([
-      cloudinary.api.resources({ resource_type: 'image', max_results: 500, direction: 'desc' }),
-      cloudinary.api.resources({ resource_type: 'raw',   max_results: 500, direction: 'desc' }),
-      cloudinary.api.usage(),
-    ]);
+    const usage = await cloudinary.api.usage();
+    cloudinaryUsage = {
+      storage_used:   usage.storage?.usage   ?? 0,
+      storage_limit:  usage.storage?.limit   ?? 0,
+      bandwidth_used: usage.bandwidth?.usage ?? 0,
+      plan:           usage.plan             ?? 'Free',
+    };
+  } catch (_) {}
 
-    const mapResource = (r) => ({
-      public_id:  r.public_id,
-      url:        r.secure_url,
-      format:     r.format,
-      size_bytes: r.bytes,
-      width:      r.width  || null,
-      height:     r.height || null,
-      created_at: r.created_at,
-      folder:     r.folder || '',
-    });
+  // Estadísticas por usuario desde la DB — solo metadatos (conteos y tamaños), sin URLs ni contenido
+  const { rows } = await db.query(`
+    select
+      u.id,
+      u.full_name,
+      u.email,
+      u.role,
+      count(cd.id)::int                                                                            as total_files,
+      coalesce(sum(cd.file_size_bytes), 0)::bigint                                                as total_bytes,
+      count(cd.id) filter (where cd.file_type like 'image/%')::int                               as image_count,
+      count(cd.id) filter (where cd.file_type not like 'image/%')::int                           as doc_count,
+      coalesce(sum(cd.file_size_bytes) filter (where cd.file_type like 'image/%'), 0)::bigint    as image_bytes,
+      coalesce(sum(cd.file_size_bytes) filter (where cd.file_type not like 'image/%'), 0)::bigint as doc_bytes,
+      max(cd.created_at)                                                                           as last_upload
+    from users u
+    join case_documents cd on cd.uploaded_by = u.id
+    group by u.id, u.full_name, u.email, u.role
+    order by total_bytes desc
+  `);
 
-    res.json({
-      usage: {
-        storage_used:    usage.storage?.usage    ?? 0,
-        storage_limit:   usage.storage?.limit    ?? 0,
-        bandwidth_used:  usage.bandwidth?.usage  ?? 0,
-        resources_count: usage.resources         ?? 0,
-        plan:            usage.plan              ?? 'Free',
-      },
-      images:    imgRes.resources.map(mapResource),
-      documents: rawRes.resources.map(mapResource),
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Error al consultar Cloudinary: ' + err.message });
-  }
+  const totals = rows.reduce((acc, r) => ({
+    total_files: acc.total_files + r.total_files,
+    total_bytes: acc.total_bytes + Number(r.total_bytes),
+    image_count: acc.image_count + r.image_count,
+    image_bytes: acc.image_bytes + Number(r.image_bytes),
+    doc_count:   acc.doc_count   + r.doc_count,
+    doc_bytes:   acc.doc_bytes   + Number(r.doc_bytes),
+  }), { total_files: 0, total_bytes: 0, image_count: 0, image_bytes: 0, doc_count: 0, doc_bytes: 0 });
+
+  res.json({ cloudinary: cloudinaryUsage, per_user: rows, totals });
 });
 
 // GET /api/admin/db-status  — estado de ambas DBs
