@@ -11,6 +11,7 @@ import 'package:juris_honoris/shared/widgets/app_card.dart';
 
 import 'accept_reject_case_page.dart';
 import 'lawyer_chat_list_page.dart';
+import 'lawyer_dossier_list_page.dart';
 import 'lawyer_marketplace_page.dart';
 import 'lawyer_profile_edit_page.dart';
 
@@ -34,6 +35,7 @@ class _LawyerDashboardPageState extends State<LawyerDashboardPage> {
     _pages = const [
       _DashboardHome(),
       LawyerMarketplacePage(),
+      LawyerDossierListPage(),
       LawyerChatListPage(),
       LawyerProfileEditPage(),
     ];
@@ -81,6 +83,10 @@ class _LawyerBottomNav extends StatelessWidget {
             icon: Icon(Icons.work_outline),
             activeIcon: Icon(Icons.work),
             label: 'Casos'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.folder_outlined),
+            activeIcon: Icon(Icons.folder),
+            label: 'Expedientes'),
         BottomNavigationBarItem(
             icon: Icon(Icons.chat_outlined),
             activeIcon: Icon(Icons.chat),

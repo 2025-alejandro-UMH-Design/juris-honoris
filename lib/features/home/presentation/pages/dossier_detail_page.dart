@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -89,35 +91,110 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
   }
 
   Future<void> _uploadDoc() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'],
-      withData: true,
+    // Selector de tipo de archivo
+    final type = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text('¿Qué deseas subir?',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.image_outlined, color: AppColors.primaryBlue),
+              title: const Text('Imagen (cámara o galería)'),
+              onTap: () => Navigator.pop(context, 'image'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.errorRed),
+              title: const Text('Documento (PDF, Word, etc.)'),
+              onTap: () => Navigator.pop(context, 'doc'),
+            ),
+          ],
+        ),
+      ),
     );
-    if (result == null || result.files.isEmpty) return;
-    final file = result.files.first;
-    if (file.bytes == null) return;
+    if (type == null || !mounted) return;
+
+    Uint8List? bytes;
+    String fileName = 'archivo';
+    String mime = 'application/octet-stream';
+
+    if (type == 'image') {
+      final source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (_) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined),
+                title: const Text('Tomar foto'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Elegir de galería'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (source == null || !mounted) return;
+      final img = await ImagePicker().pickImage(source: source, imageQuality: 85);
+      if (img == null) return;
+      bytes = await img.readAsBytes();
+      fileName = img.name;
+      mime = img.name.endsWith('.png') ? 'image/png' : 'image/jpeg';
+    } else {
+      // Documento: usa FileType.any para máxima compatibilidad Android
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final f = result.files.first;
+      // Intenta bytes primero, luego lee desde path si es null
+      bytes = f.bytes;
+      if (bytes == null && f.path != null) {
+        bytes = await File(f.path!).readAsBytes();
+      }
+      if (bytes == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo leer el archivo. Intenta con otro.'),
+              backgroundColor: AppColors.errorRed,
+            ),
+          );
+        }
+        return;
+      }
+      fileName = f.name;
+      mime = _mimeFor(f.extension ?? 'pdf');
+    }
 
     setState(() => _uploadingDoc = true);
     try {
-      final mime = _mimeFor(file.extension ?? 'jpg');
       final form = FormData.fromMap({
-        'file': MultipartFile.fromBytes(
-          file.bytes as Uint8List,
-          filename: file.name,
-          contentType: DioMediaType.parse(mime),
-        ),
-        'name': file.name,
+        'file': MultipartFile.fromBytes(bytes, filename: fileName,
+            contentType: DioMediaType.parse(mime)),
+        'name': fileName,
       });
-      await sl<Dio>()
-          .post('${ApiConfig.cases}/${widget.task.id}/documents', data: form);
+      await sl<Dio>().post(
+          '${ApiConfig.cases}/${widget.task.id}/documents', data: form);
       await _loadDocs();
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Error al subir el archivo'),
-              backgroundColor: AppColors.errorRed),
+          SnackBar(
+            content: Text('Error al subir: ${e.toString().split('\n').first}'),
+            backgroundColor: AppColors.errorRed,
+          ),
         );
       }
     }
