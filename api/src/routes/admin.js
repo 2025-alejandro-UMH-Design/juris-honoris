@@ -226,6 +226,43 @@ router.get('/requests', ...guard, async (req, res) => {
   res.json(rows);
 });
 
+// GET /api/admin/storage  — archivos almacenados en Cloudinary por tipo
+router.get('/storage', ...guard, async (req, res) => {
+  const cloudinary = require('../cloudinary');
+  try {
+    const [imgRes, rawRes, usage] = await Promise.all([
+      cloudinary.api.resources({ resource_type: 'image', max_results: 500, direction: 'desc' }),
+      cloudinary.api.resources({ resource_type: 'raw',   max_results: 500, direction: 'desc' }),
+      cloudinary.api.usage(),
+    ]);
+
+    const mapResource = (r) => ({
+      public_id:  r.public_id,
+      url:        r.secure_url,
+      format:     r.format,
+      size_bytes: r.bytes,
+      width:      r.width  || null,
+      height:     r.height || null,
+      created_at: r.created_at,
+      folder:     r.folder || '',
+    });
+
+    res.json({
+      usage: {
+        storage_used:    usage.storage?.usage    ?? 0,
+        storage_limit:   usage.storage?.limit    ?? 0,
+        bandwidth_used:  usage.bandwidth?.usage  ?? 0,
+        resources_count: usage.resources         ?? 0,
+        plan:            usage.plan              ?? 'Free',
+      },
+      images:    imgRes.resources.map(mapResource),
+      documents: rawRes.resources.map(mapResource),
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al consultar Cloudinary: ' + err.message });
+  }
+});
+
 // GET /api/admin/db-status  — estado de ambas DBs
 router.get('/db-status', ...guard, async (req, res) => {
   try {
