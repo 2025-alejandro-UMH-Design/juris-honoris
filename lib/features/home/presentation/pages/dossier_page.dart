@@ -5,7 +5,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/bottom_nav_bar.dart';
 import '../../../../shared/widgets/badge_widget.dart';
 import '../../../tasks/presentation/pages/tasks_page.dart';
-import '../../../tasks/presentation/pages/task_detail_page.dart';
+import 'dossier_detail_page.dart';
 import '../../../tasks/presentation/pages/create_task_page.dart';
 import '../../../tasks/presentation/bloc/cases_cubit.dart';
 
@@ -98,7 +98,7 @@ class _DossierPageState extends State<DossierPage> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => TaskDetailPage(task: filtered[i]),
+                          builder: (_) => DossierDetailPage(task: filtered[i]),
                         ),
                       ),
                     ),

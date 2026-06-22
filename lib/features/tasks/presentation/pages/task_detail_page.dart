@@ -58,18 +58,79 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     }
   }
 
-  Future<void> _saveProgress() async {
+  Future<void> _saveProgress({bool markComplete = false}) async {
     final cubit = context.read<CasesCubit>();
     final notes = _notesController.text.trim();
     final saved = await cubit.saveNotes(widget.task.id, notes);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(saved ? 'Progreso guardado correctamente' : 'Error al guardar, intenta de nuevo'),
-        backgroundColor: saved ? AppColors.successGreen : AppColors.errorRed,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+
+    if (markComplete && saved) {
+      await cubit.updateStatus(widget.task.id, 'completed');
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppColors.successGreen.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_rounded,
+                    color: AppColors.successGreen, size: 40),
+              ),
+              const SizedBox(height: 16),
+              const Text('¡Proceso completado!',
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.greyDark)),
+              const SizedBox(height: 8),
+              const Text(
+                'Marcaste todas las actividades como realizadas. Tu expediente ha sido archivado en el Dossier.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: AppColors.subtitleGrey, height: 1.5),
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // cierra dialog
+                  Navigator.pop(context); // vuelve a la lista
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.successGreen,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('Ver mi Dossier',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(saved
+              ? 'Progreso guardado correctamente'
+              : 'Error al guardar, intenta de nuevo'),
+          backgroundColor: saved ? AppColors.successGreen : AppColors.errorRed,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
@@ -241,6 +302,39 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                         ),
                       ),
 
+                      // Banner de completación
+                      if (totalDocs > 0 && checkedCount == totalDocs) ...[
+                        const SizedBox(height: AppSizes.md),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSizes.md, vertical: AppSizes.sm),
+                          decoration: BoxDecoration(
+                            color: AppColors.successGreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                                color: AppColors.successGreen.withValues(alpha: 0.4)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.celebration_rounded,
+                                  color: AppColors.successGreen, size: 20),
+                              SizedBox(width: AppSizes.sm),
+                              Expanded(
+                                child: Text(
+                                  '¡Completaste todas las actividades! Guarda tu progreso para finalizar.',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.successGreen,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
                       const SizedBox(height: AppSizes.xl),
 
                       // Seccion Actividades
@@ -343,48 +437,51 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                 ),
               ),
 
-              // Boton "Guardar progreso"
-              Container(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSizes.pagePadding,
-                  AppSizes.sm,
-                  AppSizes.pagePadding,
-                  AppSizes.lg,
-                ),
-                decoration: const BoxDecoration(
-                  color: AppColors.white,
-                  border: Border(
-                    top: BorderSide(color: AppColors.borderColor),
+              // Boton inferior: dinámico según progreso
+              Builder(builder: (_) {
+                final allDone = totalDocs > 0 && checkedCount == totalDocs;
+                return Container(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSizes.pagePadding,
+                    AppSizes.sm,
+                    AppSizes.pagePadding,
+                    AppSizes.lg,
                   ),
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: AppSizes.buttonHeight,
-                    child: ElevatedButton.icon(
-                      onPressed: _saveProgress,
-                      icon: const Icon(Icons.save_outlined, size: 18),
-                      label: const Text(
-                        'Guardar progreso',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                  decoration: const BoxDecoration(
+                    color: AppColors.white,
+                    border: Border(top: BorderSide(color: AppColors.borderColor)),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: AppSizes.buttonHeight,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _saveProgress(markComplete: allDone),
+                        icon: Icon(
+                          allDone ? Icons.check_circle_rounded : Icons.save_outlined,
+                          size: 18),
+                        label: Text(
+                          allDone ? '¡Marcar como completado!' : 'Guardar progreso',
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w600),
                         ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                        foregroundColor: AppColors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.buttonRadius),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: allDone
+                              ? AppColors.successGreen
+                              : AppColors.primaryBlue,
+                          foregroundColor: AppColors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppSizes.buttonRadius),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           );
         },
