@@ -14,7 +14,7 @@ const app = express();
 // ── Seguridad global ───────────────────────────────────────────
 app.use(helmet());
 
-// Rate limiting: login (5/15min por IP), IA (30/hora por IP)
+// Rate limiting: login (5/15min por IP), IA (30/hora por IP), uploads (30/hora por IP)
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -26,6 +26,14 @@ const aiLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 30,
   message: { error: 'Límite de consultas IA alcanzado. Intenta en una hora.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+// S3: evita abuso de Cloudinary — 30 uploads por hora por IP
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  message: { error: 'Límite de subidas alcanzado. Intenta en una hora.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -52,6 +60,7 @@ app.use(express.urlencoded({ extended: false }));
 // ── Routes ────────────────────────────────────────────────────
 app.use('/api/auth/login',    loginLimiter);
 app.use('/api/ai-chat',       aiLimiter);
+app.use('/api/upload',        uploadLimiter); // S3: limita subida de archivos temp
 app.use('/api/auth',          require('./routes/auth'));
 app.use('/api/lawyers',       require('./routes/lawyers'));
 app.use('/api/cases',         require('./routes/cases'));

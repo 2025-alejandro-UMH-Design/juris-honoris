@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -73,11 +74,22 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
   bool _loadingDocs = true;
   bool _uploadingDoc = false;
   String? _uploadingFileName;
+  Timer? _newBadgeTimer;
 
   @override
   void initState() {
     super.initState();
     _loadDocs();
+    // B7: hace desaparecer el badge "NUEVO" después de 10 minutos sin rebuild
+    _newBadgeTimer = Timer(const Duration(minutes: 10), () {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _newBadgeTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadDocs() async {

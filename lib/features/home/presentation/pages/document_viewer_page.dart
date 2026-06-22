@@ -40,13 +40,24 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
   bool _downloading = false;
   bool _appBarVisible = true;
 
+  // B3: sanitiza el nombre del archivo antes de usarlo como path
+  String get _safeFileName {
+    return widget.doc.name
+        .split(RegExp(r'[/\\:*?"<>|]'))
+        .last
+        .replaceAll(RegExp(r'[^\w\s.\-]'), '_')
+        .trim()
+        .replaceAll(' ', '_');
+  }
+
   // ── Descargar archivo y compartir con sistema ─────────────────────────────
   Future<void> _downloadAndShare() async {
     setState(() => _downloading = true);
     try {
       final dir = await getTemporaryDirectory();
-      final savePath = '${dir.path}/${widget.doc.name}';
+      final savePath = '${dir.path}/$_safeFileName';
 
+      // B6: Dio sin auth — OK porque las URLs de Cloudinary son públicas
       final dio = Dio();
       await dio.download(widget.doc.url, savePath);
 
@@ -64,17 +75,21 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
           ),
         );
       }
+    } finally {
+      // B2: siempre resetea _downloading, incluso si !mounted en el try
+      if (mounted) setState(() => _downloading = false);
     }
-    if (mounted) setState(() => _downloading = false);
   }
 
   // ── Guardar en descargas del dispositivo ─────────────────────────────────
   Future<void> _saveToDownloads() async {
     setState(() => _downloading = true);
     try {
-      final dir = await getDownloadsDirectory() ??
-          await getApplicationDocumentsDirectory();
-      final savePath = '${dir.path}/${widget.doc.name}';
+      // B4: cadena de fallbacks para máxima compatibilidad Android 10+
+      final dir = await getDownloadsDirectory()
+          ?? await getExternalStorageDirectory()
+          ?? await getApplicationDocumentsDirectory();
+      final savePath = '${dir.path}/$_safeFileName';
 
       final dio = Dio();
       await dio.download(widget.doc.url, savePath);
@@ -90,7 +105,7 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Guardado en Descargas: ${widget.doc.name}',
+                    'Guardado: ${widget.doc.name}',
                     style: const TextStyle(color: Colors.white, fontSize: 13),
                   ),
                 ),
@@ -109,8 +124,10 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
           ),
         );
       }
+    } finally {
+      // B2: siempre resetea _downloading
+      if (mounted) setState(() => _downloading = false);
     }
-    if (mounted) setState(() => _downloading = false);
   }
 
   // ── Abrir en app externa ──────────────────────────────────────────────────

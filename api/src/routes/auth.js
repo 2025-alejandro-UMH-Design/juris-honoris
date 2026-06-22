@@ -120,6 +120,13 @@ router.get('/me', requireAuth, async (req, res) => {
 // PUT /api/auth/me  (actualizar perfil)
 router.put('/me', requireAuth, async (req, res) => {
   const { full_name, phone, dni, fcm_token, avatar_url } = req.body;
+
+  // S4: solo permitir URLs de Cloudinary para el avatar
+  if (avatar_url != null && typeof avatar_url === 'string' &&
+      !avatar_url.startsWith('https://res.cloudinary.com/')) {
+    return res.status(400).json({ error: 'URL de avatar inválida' });
+  }
+
   const { rows } = await db.query(
     `update users set full_name  = coalesce($1, full_name),
                       phone      = coalesce($2, phone),

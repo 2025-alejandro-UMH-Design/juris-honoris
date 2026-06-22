@@ -148,23 +148,29 @@ class _LawyerDossierListPageState extends State<LawyerDossierListPage> {
                           final c = _cases[i];
                           final dateStr = _formatDate(
                               c['created_at'] as String? ?? '');
+                          final caseId = c['case_id'] as String;
                           return _CaseCard(
                             title: c['title'] as String,
                             clientName: c['client_name'] as String,
                             caseType: c['case_type'] as String,
                             date: dateStr,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => LawyerCaseDossierPage(
-                                  caseId: c['case_id'] as String,
-                                  caseTitle: c['title'] as String,
-                                  clientName: c['client_name'] as String,
-                                  description: c['description'] as String,
-                                  status: 'accepted',
-                                ),
-                              ),
-                            ),
+                            // B1: guard — no navegar si no hay caso vinculado
+                            onTap: caseId.isEmpty
+                                ? null
+                                : () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => LawyerCaseDossierPage(
+                                          caseId: caseId,
+                                          caseTitle: c['title'] as String,
+                                          clientName:
+                                              c['client_name'] as String,
+                                          description:
+                                              c['description'] as String,
+                                          status: 'accepted',
+                                        ),
+                                      ),
+                                    ),
                           );
                         },
                       ),
@@ -181,14 +187,14 @@ class _LawyerDossierListPageState extends State<LawyerDossierListPage> {
 
 class _CaseCard extends StatelessWidget {
   final String title, clientName, caseType, date;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _CaseCard({
     required this.title,
     required this.clientName,
     required this.caseType,
     required this.date,
-    required this.onTap,
+    this.onTap,
   });
 
   @override

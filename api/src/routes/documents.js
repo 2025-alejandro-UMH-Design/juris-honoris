@@ -1,8 +1,18 @@
 const router     = require('express').Router({ mergeParams: true });
+const rateLimit  = require('express-rate-limit');
 const db         = require('../db');
 const cloudinary = require('../cloudinary');
 const { requireAuth } = require('../middleware/auth');
 const { uploadCase }  = require('../middleware/upload');
+
+// S3: 30 uploads por hora por IP — protege Cloudinary y la DB
+const docUploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  message: { error: 'Límite de subidas alcanzado. Intenta en una hora.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 function uploadToCloudinary(buffer, folder, resourceType) {
   return new Promise((resolve, reject) => {
@@ -38,7 +48,7 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // POST /api/cases/:caseId/documents  — subir archivo a Cloudinary
-router.post('/', requireAuth, uploadCase.single('file'), async (req, res) => {
+router.post('/', requireAuth, docUploadLimiter, uploadCase.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Archivo requerido' });
 
   const caseRow = await db.query('select client_id, lawyer_id from cases where id = $1', [req.params.caseId]);
@@ -56,13 +66,17 @@ router.post('/', requireAuth, uploadCase.single('file'), async (req, res) => {
 
     const result = await uploadToCloudinary(req.file.buffer, folder, resourceType);
 
+    // S5: sanitiza nombre para prevenir XSS si se renderiza sin escapar
+    const rawName = req.body.name || req.file.originalname || 'documento';
+    const safeName = rawName.replace(/[<>"'&]/g, '').substring(0, 255).trim();
+
     const { rows } = await db.query(
       `insert into case_documents (case_id, uploaded_by, name, file_path, file_type, file_size_bytes)
        values ($1, $2, $3, $4, $5, $6) returning *`,
       [
         req.params.caseId,
         req.user.id,
-        req.body.name || req.file.originalname,
+        safeName,
         result.secure_url,
         req.file.mimetype,
         req.file.size,
