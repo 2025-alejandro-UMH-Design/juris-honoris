@@ -190,10 +190,15 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
       await _loadDocs();
     } catch (e) {
       if (mounted) {
+        final msg = (e is DioException)
+            ? (e.response?.data?['error']?.toString() ??
+                'Error ${e.response?.statusCode ?? "de red"}')
+            : e.toString().split('\n').first;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al subir: ${e.toString().split('\n').first}'),
+            content: Text('Error al subir: $msg'),
             backgroundColor: AppColors.errorRed,
+            duration: const Duration(seconds: 6),
           ),
         );
       }

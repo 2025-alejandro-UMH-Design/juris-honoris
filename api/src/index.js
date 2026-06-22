@@ -140,6 +140,22 @@ app.listen(PORT, '0.0.0.0', async () => {
     await db.query(`
       ALTER TABLE cases ADD COLUMN IF NOT EXISTS completed_steps JSONB DEFAULT '[]'::jsonb
     `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS case_documents (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        case_id         UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
+        uploaded_by     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name            VARCHAR(255) NOT NULL,
+        file_path       TEXT NOT NULL,
+        file_type       VARCHAR(100) NOT NULL DEFAULT '',
+        file_size_bytes INT NOT NULL DEFAULT 0,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `);
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_case_documents_case_id
+        ON case_documents(case_id)
+    `);
     console.log(`✓ Juris Honoris API corriendo`);
     console.log(`  Local:    http://localhost:${PORT}/api/health`);
     console.log(`  Red:      http://192.168.1.94:${PORT}/api/health  ← usar en el celular`);
