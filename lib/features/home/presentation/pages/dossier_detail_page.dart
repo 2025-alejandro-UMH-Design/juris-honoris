@@ -15,7 +15,7 @@ import '../../../../injection_container.dart';
 import '../../../../shared/widgets/badge_widget.dart';
 import '../../../tasks/presentation/pages/tasks_page.dart';
 
-// ─── Modelo de documento ────────────────────────────────────────────────────
+// ─── Modelo ──────────────────────────────────────────────────────────────────
 
 class _Doc {
   final String id, name, filePath, fileType, uploadedByName;
@@ -39,11 +39,14 @@ class _Doc {
         fileType: j['file_type'] as String? ?? '',
         fileSizeBytes: (j['file_size_bytes'] as num?)?.toInt() ?? 0,
         uploadedByName: j['uploaded_by_name'] as String? ?? '',
-        createdAt:
-            DateTime.tryParse(j['created_at'] as String? ?? '') ?? DateTime.now(),
+        createdAt: DateTime.tryParse(j['created_at'] as String? ?? '') ??
+            DateTime.now(),
       );
 
   bool get isImage => fileType.startsWith('image/');
+
+  bool get isNew =>
+      DateTime.now().difference(createdAt).inMinutes < 10;
 
   String get sizeLabel {
     if (fileSizeBytes < 1024) return '$fileSizeBytes B';
@@ -54,11 +57,10 @@ class _Doc {
   }
 }
 
-// ─── Página principal ────────────────────────────────────────────────────────
+// ─── Página ───────────────────────────────────────────────────────────────────
 
 class DossierDetailPage extends StatefulWidget {
   final TaskData task;
-
   const DossierDetailPage({super.key, required this.task});
 
   @override
@@ -69,6 +71,7 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
   List<_Doc> _docs = [];
   bool _loadingDocs = true;
   bool _uploadingDoc = false;
+  String? _uploadingFileName;
 
   @override
   void initState() {
@@ -79,39 +82,72 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
   Future<void> _loadDocs() async {
     setState(() => _loadingDocs = true);
     try {
-      final res =
-          await sl<Dio>().get('${ApiConfig.cases}/${widget.task.id}/documents');
-      setState(() {
-        _docs = (res.data as List)
-            .map((j) => _Doc.fromJson(j as Map<String, dynamic>))
-            .toList();
-      });
+      final res = await sl<Dio>()
+          .get('${ApiConfig.cases}/${widget.task.id}/documents');
+      if (mounted) {
+        setState(() {
+          _docs = (res.data as List)
+              .map((j) => _Doc.fromJson(j as Map<String, dynamic>))
+              .toList();
+        });
+      }
     } catch (_) {}
     if (mounted) setState(() => _loadingDocs = false);
   }
 
   Future<void> _uploadDoc() async {
-    // Selector de tipo de archivo
+    // ── Selector de tipo ──────────────────────────────────────────────────
     final type = await showModalBottomSheet<String>(
       context: context,
-      builder: (_) => SafeArea(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('¿Qué deseas subir?',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.greyLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.image_outlined, color: AppColors.primaryBlue),
-              title: const Text('Imagen (cámara o galería)'),
-              onTap: () => Navigator.pop(context, 'image'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.errorRed),
-              title: const Text('Documento (PDF, Word, etc.)'),
-              onTap: () => Navigator.pop(context, 'doc'),
+            const SizedBox(height: 16),
+            const Text('Agregar al expediente',
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.greyDark)),
+            const SizedBox(height: 4),
+            const Text('¿Qué tipo de archivo deseas subir?',
+                style:
+                    TextStyle(fontSize: 13, color: AppColors.subtitleGrey)),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _PickerOption(
+                    icon: Icons.image_rounded,
+                    color: AppColors.primaryBlue,
+                    label: 'Imagen',
+                    sublabel: 'Cámara o galería',
+                    onTap: () => Navigator.pop(context, 'image'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _PickerOption(
+                    icon: Icons.picture_as_pdf_rounded,
+                    color: AppColors.errorRed,
+                    label: 'Documento',
+                    sublabel: 'PDF, Word, etc.',
+                    onTap: () => Navigator.pop(context, 'doc'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -126,18 +162,54 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
     if (type == 'image') {
       final source = await showModalBottomSheet<ImageSource>(
         context: context,
-        builder: (_) => SafeArea(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (_) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.greyLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Seleccionar imagen',
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.greyDark)),
+              const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.camera_alt_outlined),
-                title: const Text('Tomar foto'),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                tileColor: const Color(0xFFF5F7FF),
+                leading: const Icon(Icons.camera_alt_rounded,
+                    color: AppColors.primaryBlue),
+                title: const Text('Tomar foto',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Usar la cámara del dispositivo',
+                    style:
+                        TextStyle(fontSize: 12, color: AppColors.subtitleGrey)),
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
+              const SizedBox(height: 8),
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('Elegir de galería'),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                tileColor: const Color(0xFFF5F7FF),
+                leading: const Icon(Icons.photo_library_rounded,
+                    color: AppColors.primaryBlue),
+                title: const Text('Elegir de galería',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Seleccionar imagen guardada',
+                    style:
+                        TextStyle(fontSize: 12, color: AppColors.subtitleGrey)),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
             ],
@@ -145,20 +217,17 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
         ),
       );
       if (source == null || !mounted) return;
-      final img = await ImagePicker().pickImage(source: source, imageQuality: 85);
+      final img =
+          await ImagePicker().pickImage(source: source, imageQuality: 85);
       if (img == null) return;
       bytes = await img.readAsBytes();
       fileName = img.name;
       mime = img.name.endsWith('.png') ? 'image/png' : 'image/jpeg';
     } else {
-      // Documento: usa FileType.any para máxima compatibilidad Android
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.any,
-        withData: true,
-      );
+      final result = await FilePicker.platform
+          .pickFiles(type: FileType.any, withData: true);
       if (result == null || result.files.isEmpty) return;
       final f = result.files.first;
-      // Intenta bytes primero, luego lee desde path si es null
       bytes = f.bytes;
       if (bytes == null && f.path != null) {
         bytes = await File(f.path!).readAsBytes();
@@ -178,16 +247,52 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
       mime = _mimeFor(f.extension ?? 'pdf');
     }
 
-    setState(() => _uploadingDoc = true);
+    setState(() {
+      _uploadingDoc = true;
+      _uploadingFileName = fileName;
+    });
+
     try {
       final form = FormData.fromMap({
-        'file': MultipartFile.fromBytes(bytes, filename: fileName,
+        'file': MultipartFile.fromBytes(bytes,
+            filename: fileName,
             contentType: DioMediaType.parse(mime)),
         'name': fileName,
       });
-      await sl<Dio>().post(
-          '${ApiConfig.cases}/${widget.task.id}/documents', data: form);
+      await sl<Dio>()
+          .post('${ApiConfig.cases}/${widget.task.id}/documents', data: form);
       await _loadDocs();
+
+      if (mounted) {
+        // Nombre corto para el SnackBar
+        final shortName = fileName.length > 30
+            ? '${fileName.substring(0, 27)}...'
+            : fileName;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.successGreen,
+            duration: const Duration(seconds: 5),
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded,
+                    color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '"$shortName" guardado en el expediente',
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+            action: SnackBarAction(
+              label: 'Subir otro',
+              textColor: Colors.white,
+              onPressed: _uploadDoc,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         final msg = (e is DioException)
@@ -196,14 +301,30 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
             : e.toString().split('\n').first;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al subir: $msg'),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded,
+                    color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Error al subir: $msg',
+                      style: const TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
             backgroundColor: AppColors.errorRed,
             duration: const Duration(seconds: 6),
           ),
         );
       }
     }
-    if (mounted) setState(() => _uploadingDoc = false);
+
+    if (mounted) {
+      setState(() {
+        _uploadingDoc = false;
+        _uploadingFileName = null;
+      });
+    }
   }
 
   String _mimeFor(String ext) => switch (ext.toLowerCase()) {
@@ -223,28 +344,50 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
     }
   }
 
-  Future<void> _deleteDoc(String docId) async {
+  Future<void> _deleteDoc(String docId, String docName) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Eliminar documento'),
-        content: const Text('¿Seguro que deseas eliminar este documento?'),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Eliminar documento',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content:
+            Text('¿Eliminar "$docName" del expediente? Esta acción no se puede deshacer.',
+                style: const TextStyle(
+                    fontSize: 13, color: AppColors.subtitleGrey, height: 1.5)),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar')),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Eliminar',
-                  style: TextStyle(color: AppColors.errorRed))),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorRed,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
     if (confirm != true) return;
     try {
-      await sl<Dio>()
-          .delete('${ApiConfig.cases}/${widget.task.id}/documents/$docId');
+      await sl<Dio>().delete(
+          '${ApiConfig.cases}/${widget.task.id}/documents/$docId');
       await _loadDocs();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Documento eliminado'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (_) {}
   }
 
@@ -262,20 +405,28 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
       'commercial' => 'Mercantil',
       _ => 'Otro',
     };
-    final dateStr = task.dueDate.isNotEmpty ? '\n📅 Fecha límite: ${task.dueDate}' : '';
+    final dateStr =
+        task.dueDate.isNotEmpty ? '\n📅 Fecha límite: ${task.dueDate}' : '';
     final notes =
-        task.notes.isNotEmpty ? '\n📝 Notas: ${task.notes}' : '';
-    final docLines = _docs.isEmpty
-        ? ''
-        : '\n\n📁 Documentos adjuntos:\n${_docs.map((d) => '  • ${d.name}').join('\n')}';
+        task.notes.isNotEmpty ? '\n\n📝 Observaciones:\n${task.notes}' : '';
+
+    String docSection = '';
+    if (_docs.isNotEmpty) {
+      final docList =
+          _docs.asMap().entries.map((e) => '${e.key + 1}. ${e.value.name}').join('\n');
+      docSection = '\n\n📂 Documentos del expediente (${_docs.length}):\n$docList';
+    }
 
     final text = Uri.encodeComponent(
-      '🗂️ *Expediente Legal - Juris Honoris*\n\n'
+      '🗂️ *Expediente Legal — Juris Honoris*\n'
+      '━━━━━━━━━━━━━━━━━━\n\n'
       '📋 *${task.title}*\n'
       '🏷️ Área: $categoryLabel\n'
-      '📊 Estado: $statusLabel$dateStr$notes$docLines\n\n'
-      '──────────────────\n'
-      'Compartido desde Juris Honoris',
+      '📊 Estado: $statusLabel$dateStr'
+      '$notes'
+      '$docSection\n\n'
+      '━━━━━━━━━━━━━━━━━━\n'
+      '_Enviado desde Juris Honoris_',
     );
 
     final uri = Uri.parse('https://wa.me/?text=$text');
@@ -299,23 +450,101 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
               color: AppColors.primaryBlue, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Expediente',
-          style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.greyDark),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Expediente',
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.greyDark)),
+            if (_docs.isNotEmpty)
+              Text(
+                '${_docs.length} documento${_docs.length == 1 ? '' : 's'}',
+                style: const TextStyle(
+                    fontSize: 11, color: AppColors.subtitleGrey),
+              ),
+          ],
         ),
         actions: [
           IconButton(
             tooltip: 'Compartir por WhatsApp',
-            icon: const Icon(Icons.share_rounded, color: AppColors.primaryBlue),
+            icon: const Icon(Icons.share_rounded,
+                color: AppColors.primaryBlue),
             onPressed: _shareWhatsApp,
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.borderColor),
+          preferredSize: Size.fromHeight(_uploadingDoc ? 5 : 1),
+          child: _uploadingDoc
+              ? LinearProgressIndicator(
+                  backgroundColor:
+                      AppColors.primaryBlue.withValues(alpha: 0.15),
+                  color: AppColors.primaryBlue,
+                  minHeight: 4,
+                )
+              : Container(height: 1, color: AppColors.borderColor),
+        ),
+      ),
+      // ── Barra inferior fija ───────────────────────────────────────────────
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            border: Border(top: BorderSide(color: AppColors.borderColor)),
+          ),
+          child: Row(
+            children: [
+              // Botón agregar
+              Expanded(
+                flex: 2,
+                child: OutlinedButton.icon(
+                  onPressed: _uploadingDoc ? null : _uploadDoc,
+                  icon: _uploadingDoc
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primaryBlue))
+                      : const Icon(Icons.attach_file_rounded, size: 18),
+                  label: Text(_uploadingDoc
+                      ? 'Subiendo...'
+                      : 'Agregar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryBlue,
+                    side: const BorderSide(color: AppColors.primaryBlue),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppSizes.buttonRadius)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Botón WhatsApp
+              Expanded(
+                flex: 3,
+                child: ElevatedButton.icon(
+                  onPressed: _shareWhatsApp,
+                  icon: const Icon(Icons.send_rounded, size: 18),
+                  label: const Text('Compartir por WhatsApp'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppSizes.buttonRadius)),
+                    textStyle: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -324,11 +553,17 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
-              AppSizes.pagePadding, AppSizes.lg, AppSizes.pagePadding, 100),
+              AppSizes.pagePadding, AppSizes.lg, AppSizes.pagePadding, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header ──────────────────────────────────────────────────
+              // ── Banner de carga ────────────────────────────────────────
+              if (_uploadingDoc) ...[
+                _UploadingBanner(fileName: _uploadingFileName),
+                const SizedBox(height: AppSizes.md),
+              ],
+
+              // ── Info del caso ──────────────────────────────────────────
               _SectionCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,7 +574,8 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                            color:
+                                AppColors.primaryBlue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(Icons.folder_special_rounded,
@@ -370,7 +606,8 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
                     ),
                     if (task.description.isNotEmpty) ...[
                       const SizedBox(height: AppSizes.md),
-                      const Divider(height: 1, color: AppColors.borderColor),
+                      const Divider(
+                          height: 1, color: AppColors.borderColor),
                       const SizedBox(height: AppSizes.md),
                       Text(task.description,
                           style: const TextStyle(
@@ -382,7 +619,7 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
                 ),
               ),
 
-              // ── Metadatos ────────────────────────────────────────────────
+              // ── Metadatos ──────────────────────────────────────────────
               const SizedBox(height: AppSizes.md),
               _SectionCard(
                 child: Column(
@@ -405,7 +642,7 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
                 ),
               ),
 
-              // ── Notas del proceso ────────────────────────────────────────
+              // ── Notas ─────────────────────────────────────────────────
               if (task.notes.isNotEmpty) ...[
                 const SizedBox(height: AppSizes.md),
                 const _SectionTitle(title: 'Notas del proceso'),
@@ -419,32 +656,38 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
                 ),
               ],
 
-              // ── Documentos ───────────────────────────────────────────────
-              const SizedBox(height: AppSizes.md),
+              // ── Documentos ─────────────────────────────────────────────
+              const SizedBox(height: AppSizes.lg),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Expanded(child: _SectionTitle(title: 'Documentos')),
-                  TextButton.icon(
-                    onPressed: _uploadingDoc ? null : _uploadDoc,
-                    icon: _uploadingDoc
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: AppColors.primaryBlue))
-                        : const Icon(Icons.upload_file_outlined,
-                            size: 16, color: AppColors.primaryBlue),
-                    label: Text(
-                      _uploadingDoc ? 'Subiendo...' : 'Subir',
-                      style: const TextStyle(
-                          color: AppColors.primaryBlue,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600),
+                  const Expanded(
+                      child: _SectionTitle(title: 'Documentos adjuntos')),
+                  if (_docs.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_docs.length}',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryBlue),
+                      ),
                     ),
-                  ),
                 ],
               ),
-              const SizedBox(height: AppSizes.sm),
+              const SizedBox(height: 6),
+              const Text(
+                'Archivos guardados automáticamente en la nube',
+                style: TextStyle(fontSize: 12, color: AppColors.subtitleGrey),
+              ),
+              const SizedBox(height: AppSizes.md),
+
               if (_loadingDocs)
                 const Center(
                   child: Padding(
@@ -454,80 +697,26 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
                   ),
                 )
               else if (_docs.isEmpty)
-                _SectionCard(
-                  child: Column(
-                    children: [
-                      Icon(Icons.folder_open_rounded,
-                          size: 40,
-                          color: AppColors.greyLight.withValues(alpha: 0.8)),
-                      const SizedBox(height: AppSizes.sm),
-                      const Text('Sin documentos adjuntos',
-                          style: TextStyle(
-                              fontSize: 13, color: AppColors.greyMedium)),
-                      const SizedBox(height: AppSizes.xs),
-                      const Text(
-                          'Sube documentos relacionados a este proceso.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 12, color: AppColors.hintGrey)),
-                    ],
-                  ),
-                )
-              else
+                _EmptyDocs(onUpload: _uploadDoc)
+              else ...[
                 ..._docs.map((doc) => _DocCard(
                       doc: doc,
                       onOpen: () => _openFile(doc.filePath),
-                      onDelete: () => _deleteDoc(doc.id),
+                      onDelete: () => _deleteDoc(doc.id, doc.name),
                     )),
-
-              // ── Botón compartir ──────────────────────────────────────────
-              const SizedBox(height: AppSizes.xl),
-              SizedBox(
-                width: double.infinity,
-                height: AppSizes.buttonHeight,
-                child: ElevatedButton.icon(
-                  onPressed: _shareWhatsApp,
-                  icon: const Icon(Icons.send_rounded, size: 20),
-                  label: const Text('Compartir expediente',
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF25D366),
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.buttonRadius)),
-                  ),
+                const SizedBox(height: AppSizes.md),
+                // Preview de lo que se compartirá
+                _SharePreview(
+                  docCount: _docs.length,
+                  hasNotes: task.notes.isNotEmpty,
                 ),
-              ),
-              const SizedBox(height: AppSizes.md),
-              SizedBox(
-                width: double.infinity,
-                height: AppSizes.buttonHeight,
-                child: OutlinedButton.icon(
-                  onPressed: _shareWhatsApp,
-                  icon: const Icon(Icons.share_outlined, size: 18),
-                  label: const Text('Compartir con abogado',
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primaryBlue,
-                    side: const BorderSide(color: AppColors.primaryBlue),
-                    shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppSizes.buttonRadius)),
-                  ),
-                ),
-              ),
+              ],
             ],
           ),
         ),
       ),
     );
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   Widget _statusBadge(String status) => switch (status) {
         'completed' =>
@@ -545,7 +734,8 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
       'commercial': 'Mercantil',
       'other': 'Otro',
     };
-    return BadgeWidget(label: labels[cat] ?? cat, variant: BadgeVariant.gray);
+    return BadgeWidget(
+        label: labels[cat] ?? cat, variant: BadgeVariant.gray);
   }
 
   String _priorityLabel(String p) =>
@@ -559,6 +749,175 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
 }
 
 // ─── Widgets auxiliares ──────────────────────────────────────────────────────
+
+class _UploadingBanner extends StatelessWidget {
+  final String? fileName;
+  const _UploadingBanner({this.fileName});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = fileName != null && fileName!.length > 28
+        ? '${fileName!.substring(0, 25)}...'
+        : (fileName ?? 'archivo');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F0FE),
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+        border: Border.all(color: AppColors.primaryBlue.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+                strokeWidth: 2.5, color: AppColors.primaryBlue),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Subiendo al expediente...',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryBlue)),
+                Text(name,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.subtitleGrey),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyDocs extends StatelessWidget {
+  final VoidCallback onUpload;
+  const _EmptyDocs({required this.onUpload});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+        border: Border.all(
+            color: AppColors.borderColor, style: BorderStyle.solid),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.primaryBlue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.cloud_upload_outlined,
+                size: 32, color: AppColors.primaryBlue),
+          ),
+          const SizedBox(height: 16),
+          const Text('Sin documentos adjuntos',
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.greyDark)),
+          const SizedBox(height: 6),
+          const Text(
+            'Agrega fotos o documentos relacionados\na este proceso legal.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontSize: 13, color: AppColors.subtitleGrey, height: 1.5),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: onUpload,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Agregar primer documento'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SharePreview extends StatelessWidget {
+  final int docCount;
+  final bool hasNotes;
+  const _SharePreview({required this.docCount, required this.hasNotes});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FBF4),
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+        border: Border.all(
+            color: const Color(0xFF25D366).withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.send_rounded,
+                  size: 14, color: Color(0xFF128C7E)),
+              SizedBox(width: 6),
+              Text('Resumen que se compartirá',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF128C7E))),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const _PreviewLine('Información del caso (título, área, estado)'),
+          if (hasNotes) const _PreviewLine('Notas del proceso'),
+          _PreviewLine('Lista de $docCount documento${docCount == 1 ? '' : 's'} adjunto${docCount == 1 ? '' : 's'}'),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewLine extends StatelessWidget {
+  final String text;
+  const _PreviewLine(this.text);
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 3),
+        child: Row(
+          children: [
+            const Icon(Icons.check_rounded,
+                size: 13, color: Color(0xFF25D366)),
+            const SizedBox(width: 6),
+            Text(text,
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.subtitleGrey)),
+          ],
+        ),
+      );
+}
 
 class _SectionTitle extends StatelessWidget {
   final String title;
@@ -586,7 +945,9 @@ class _SectionCard extends StatelessWidget {
           border: Border.all(color: AppColors.borderColor),
           boxShadow: const [
             BoxShadow(
-                color: Color(0x0D000000), blurRadius: 4, offset: Offset(0, 2))
+                color: Color(0x0D000000),
+                blurRadius: 4,
+                offset: Offset(0, 2))
           ],
         ),
         child: child,
@@ -634,67 +995,165 @@ class _DocCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('dd/MM/yyyy').format(doc.createdAt);
+    final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(doc.createdAt);
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.sm),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-        border: Border.all(color: AppColors.borderColor),
+        border: Border.all(
+            color: doc.isNew
+                ? AppColors.successGreen.withValues(alpha: 0.4)
+                : AppColors.borderColor),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x0A000000), blurRadius: 4, offset: Offset(0, 2))
+              color: Color(0x0A000000),
+              blurRadius: 4,
+              offset: Offset(0, 2))
         ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.md, vertical: AppSizes.xs),
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: doc.isImage
-                ? const Color(0xFFE3F2FD)
-                : const Color(0xFFFCE4EC),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            doc.isImage
-                ? Icons.image_outlined
-                : Icons.picture_as_pdf_outlined,
-            color: doc.isImage ? AppColors.primaryBlue : AppColors.errorRed,
-            size: 20,
-          ),
-        ),
-        title: Text(doc.name,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.greyDark),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis),
-        subtitle: Text('${doc.sizeLabel} · $dateStr',
-            style: const TextStyle(
-                fontSize: 11, color: AppColors.subtitleGrey)),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.open_in_new_rounded,
-                  size: 18, color: AppColors.primaryBlue),
-              onPressed: onOpen,
-              tooltip: 'Abrir',
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.md, vertical: 6),
+            leading: Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: doc.isImage
+                    ? const Color(0xFFE3F2FD)
+                    : const Color(0xFFFCE4EC),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                doc.isImage
+                    ? Icons.image_rounded
+                    : Icons.picture_as_pdf_rounded,
+                color:
+                    doc.isImage ? AppColors.primaryBlue : AppColors.errorRed,
+                size: 22,
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline_rounded,
-                  size: 18, color: AppColors.errorRed),
-              onPressed: onDelete,
-              tooltip: 'Eliminar',
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(doc.name,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.greyDark),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ),
+                if (doc.isNew) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.successGreen,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text('NUEVO',
+                        style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.5)),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ),
+            subtitle: Text('${doc.sizeLabel} · $dateStr',
+                style: const TextStyle(
+                    fontSize: 11, color: AppColors.subtitleGrey)),
+            trailing: PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded,
+                  size: 20, color: AppColors.greyMedium),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              onSelected: (v) {
+                if (v == 'open') onOpen();
+                if (v == 'delete') onDelete();
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(
+                  value: 'open',
+                  child: Row(
+                    children: [
+                      Icon(Icons.open_in_new_rounded,
+                          size: 18, color: AppColors.primaryBlue),
+                      SizedBox(width: 10),
+                      Text('Abrir archivo'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded,
+                          size: 18, color: AppColors.errorRed),
+                      SizedBox(width: 10),
+                      Text('Eliminar',
+                          style: TextStyle(color: AppColors.errorRed)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+// ── Picker card bonito ────────────────────────────────────────────────────────
+
+class _PickerOption extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String sublabel;
+  final VoidCallback onTap;
+
+  const _PickerOption({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.sublabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.25)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 30),
+              const SizedBox(height: 10),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: color)),
+              const SizedBox(height: 2),
+              Text(sublabel,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 11, color: AppColors.subtitleGrey)),
+            ],
+          ),
+        ),
+      );
 }
