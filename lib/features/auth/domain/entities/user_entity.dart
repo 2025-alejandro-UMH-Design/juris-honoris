@@ -10,6 +10,7 @@ class UserEntity extends Equatable {
   final String? name;
   final String? phone;
   final String? dni;
+  final String? avatarUrl;
   final UserRole role;
   final UserPlan plan;
   final bool isVerified;
@@ -22,6 +23,7 @@ class UserEntity extends Equatable {
     this.name,
     this.phone,
     this.dni,
+    this.avatarUrl,
     required this.role,
     required this.plan,
     required this.isVerified,
@@ -36,6 +38,7 @@ class UserEntity extends Equatable {
       name:                    json['full_name'] as String?,
       phone:                   json['phone'] as String?,
       dni:                     json['dni'] as String?,
+      avatarUrl:               json['avatar_url'] as String?,
       role:                    _roleFromString(json['role'] as String? ?? 'client'),
       plan:                    (json['plan'] as String?) == 'premium' ? UserPlan.premium : UserPlan.free,
       isVerified:              json['is_verified'] as bool? ?? false,
@@ -58,6 +61,7 @@ class UserEntity extends Equatable {
     String? name,
     String? phone,
     String? dni,
+    String? avatarUrl,
     UserRole? role,
     UserPlan? plan,
     bool? isVerified,
@@ -70,6 +74,7 @@ class UserEntity extends Equatable {
       name: name ?? this.name,
       phone: phone ?? this.phone,
       dni: dni ?? this.dni,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
       role: role ?? this.role,
       plan: plan ?? this.plan,
       isVerified: isVerified ?? this.isVerified,
@@ -86,6 +91,7 @@ class UserEntity extends Equatable {
         name,
         phone,
         dni,
+        avatarUrl,
         role,
         plan,
         isVerified,

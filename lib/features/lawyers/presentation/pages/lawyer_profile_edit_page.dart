@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:juris_honoris/core/constants/api_config.dart';
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
@@ -46,6 +47,7 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
   final Set<String> _selectedSpecialties = {};
   bool _isSaving = false;
   bool _isLoadingProfile = true;
+  String? _avatarUrl;
 
   @override
   void initState() {
@@ -53,10 +55,61 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
     _loadProfile();
   }
 
+  Future<void> _changePhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primaryBlue),
+              title: const Text('Tomar foto'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primaryBlue),
+              title: const Text('Elegir de galería'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    final img = await ImagePicker().pickImage(source: source, imageQuality: 85);
+    if (img == null || !mounted) return;
+    setState(() => _isSaving = true);
+    try {
+      final bytes = await img.readAsBytes();
+      final ext = img.name.split('.').last.toLowerCase();
+      final mime = ext == 'png' ? 'image/png' : 'image/jpeg';
+      final form = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: img.name,
+            contentType: DioMediaType.parse(mime)),
+      });
+      final res = await sl<Dio>().post('${ApiConfig.upload}/temp', data: form);
+      final url = res.data['url'] as String;
+      await sl<Dio>().put('${ApiConfig.auth}/me', data: {'avatar_url': url});
+      if (!mounted) return;
+      setState(() { _avatarUrl = url; _isSaving = false; });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto actualizada'), backgroundColor: AppColors.successGreen),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al subir la foto'), backgroundColor: AppColors.errorRed),
+      );
+    }
+  }
+
   Future<void> _loadProfile() async {
     final user = context.read<AuthCubit>().currentUser;
     _nombreController.text = user?.name ?? '';
     _telefonoController.text = user?.phone ?? '';
+    _avatarUrl = user?.avatarUrl;
     try {
       final dio = sl<Dio>();
       final res = await dio.get('${ApiConfig.lawyers}/me/profile');
@@ -162,28 +215,29 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                   children: [
                     Stack(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
                           radius: 44,
                           backgroundColor: AppColors.primaryBlue,
-                          child: Text(
-                            'CM',
-                            style: TextStyle(
-                                color: AppColors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold),
-                          ),
+                          backgroundImage: _avatarUrl != null
+                              ? NetworkImage(_avatarUrl!) as ImageProvider
+                              : null,
+                          child: _avatarUrl == null
+                              ? Text(
+                                  (context.read<AuthCubit>().currentUser?.name ?? 'U')
+                                      .substring(0, 1)
+                                      .toUpperCase(),
+                                  style: const TextStyle(
+                                      color: AppColors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold),
+                                )
+                              : null,
                         ),
                         Positioned(
                           bottom: 0,
                           right: 0,
                           child: GestureDetector(
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Cambio de foto próximamente')),
-                              );
-                            },
+                            onTap: _isSaving ? null : _changePhoto,
                             child: Container(
                               width: 30,
                               height: 30,
@@ -206,12 +260,7 @@ class _LawyerProfileEditPageState extends State<LawyerProfileEditPage> {
                     ),
                     const SizedBox(height: AppSizes.sm),
                     TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Cambio de foto próximamente')),
-                        );
-                      },
+                      onPressed: _isSaving ? null : _changePhoto,
                       child: const Text(
                         'Cambiar foto',
                         style: TextStyle(

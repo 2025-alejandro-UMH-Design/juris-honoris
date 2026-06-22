@@ -1,7 +1,12 @@
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../injection_container.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_input_field.dart';
 import '../../../home/presentation/widgets/lawyer_card.dart';
@@ -31,6 +36,8 @@ class _LawyerRequestPageState extends State<LawyerRequestPage> {
 
   int _solicitationsUsed = 0;
   bool _isPlanFree = true;
+
+  final List<({String name, Uint8List bytes, String mime})> _attachments = [];
 
   final _caseTypes = [
     'Consulta general',
@@ -242,7 +249,7 @@ class _LawyerRequestPageState extends State<LawyerRequestPage> {
 
                 const SizedBox(height: AppSizes.xl),
 
-                // Archivos adjuntos (UI only)
+                // Archivos adjuntos
                 const Text(
                   'Documentos adjuntos',
                   style: TextStyle(
@@ -253,57 +260,56 @@ class _LawyerRequestPageState extends State<LawyerRequestPage> {
                 ),
                 const SizedBox(height: AppSizes.sm),
                 GestureDetector(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Función de adjuntos próximamente',
-                          style: TextStyle(color: AppColors.white),
-                        ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
+                  onTap: _isLoading ? null : _pickFiles,
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppSizes.xl),
                     decoration: BoxDecoration(
                       color: AppColors.white,
-                      borderRadius:
-                          BorderRadius.circular(AppSizes.inputRadius),
-                      border: Border.all(
-                        color: AppColors.borderColor,
-                        style: BorderStyle.solid,
-                      ),
+                      borderRadius: BorderRadius.circular(AppSizes.inputRadius),
+                      border: Border.all(color: AppColors.borderColor),
                     ),
                     child: const Column(
                       children: [
-                        Icon(
-                          Icons.attach_file_rounded,
-                          color: AppColors.greyMedium,
-                          size: 32,
-                        ),
+                        Icon(Icons.attach_file_rounded,
+                            color: AppColors.greyMedium, size: 32),
                         SizedBox(height: AppSizes.xs),
-                        Text(
-                          'Adjuntar documentos',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.primaryBlue,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        Text('Adjuntar documentos',
+                            style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.primaryBlue,
+                                fontWeight: FontWeight.w500)),
                         SizedBox(height: 2),
-                        Text(
-                          'PDF, imágenes u otros documentos relevantes',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.greyMedium,
-                          ),
-                        ),
+                        Text('PDF, Word, imágenes (máx. 5 archivos)',
+                            style: TextStyle(
+                                fontSize: 12, color: AppColors.greyMedium)),
                       ],
                     ),
                   ),
                 ),
+                if (_attachments.isNotEmpty) ...[
+                  const SizedBox(height: AppSizes.sm),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: _attachments.asMap().entries.map((e) {
+                      final isImg = e.value.mime.startsWith('image/');
+                      return Chip(
+                        avatar: Icon(
+                            isImg ? Icons.image_outlined : Icons.picture_as_pdf_outlined,
+                            size: 14,
+                            color: AppColors.primaryBlue),
+                        label: Text(e.value.name,
+                            style: const TextStyle(fontSize: 11),
+                            overflow: TextOverflow.ellipsis),
+                        deleteIcon: const Icon(Icons.close, size: 14),
+                        onDeleted: () => setState(() => _attachments.removeAt(e.key)),
+                        backgroundColor: const Color(0xFFE3F2FD),
+                        side: BorderSide.none,
+                      );
+                    }).toList(),
+                  ),
+                ],
 
                 // Nota de plan free
                 if (_isPlanFree) ...[
@@ -362,13 +368,64 @@ class _LawyerRequestPageState extends State<LawyerRequestPage> {
     );
   }
 
-  void _submit() {
+  Future<void> _pickFiles() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'],
+      withData: true,
+    );
+    if (result == null) return;
+    for (final f in result.files) {
+      if (f.bytes == null) continue;
+      if (_attachments.length >= 5) break;
+      setState(() => _attachments.add((name: f.name, bytes: f.bytes!, mime: _mimeFor(f.extension ?? ''))));
+    }
+  }
+
+  String _mimeFor(String ext) {
+    switch (ext.toLowerCase()) {
+      case 'pdf':  return 'application/pdf';
+      case 'doc':  return 'application/msword';
+      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'png':  return 'image/png';
+      case 'webp': return 'image/webp';
+      default:     return 'image/jpeg';
+    }
+  }
+
+  Future<List<String>> _uploadAttachments() async {
+    final dio = sl<Dio>();
+    final urls = <String>[];
+    for (final a in _attachments) {
+      try {
+        final form = FormData.fromMap({
+          'file': MultipartFile.fromBytes(a.bytes, filename: a.name,
+              contentType: DioMediaType.parse(a.mime)),
+        });
+        final res = await dio.post('${ApiConfig.upload}/temp', data: form);
+        urls.add(res.data['url'] as String);
+      } catch (_) {}
+    }
+    return urls;
+  }
+
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
+    String description = _descController.text.trim();
+    if (_attachments.isNotEmpty) {
+      final urls = await _uploadAttachments();
+      if (urls.isNotEmpty) {
+        final lines = urls.asMap().entries.map((e) => '• ${_attachments[e.key].name}: ${e.value}').join('\n');
+        description += '\n\n📎 Documentos adjuntos:\n$lines';
+      }
+    }
+    if (!mounted) return;
     context.read<LawyersCubit>().sendRequest(
           lawyerId: widget.lawyer.id,
           subject: _caseType,
-          description: _descController.text.trim(),
+          description: description,
         );
   }
 

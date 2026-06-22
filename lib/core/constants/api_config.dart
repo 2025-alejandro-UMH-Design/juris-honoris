@@ -28,4 +28,5 @@ class ApiConfig {
   static const reviews       = '$baseUrl/reviews';
   static const notifications = '$baseUrl/notifications';
   static const admin         = '$baseUrl/admin';
+  static const upload        = '$baseUrl/upload';
 }

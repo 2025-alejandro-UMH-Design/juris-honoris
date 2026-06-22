@@ -249,10 +249,40 @@ class LawyerProfilePage extends StatelessWidget {
                     variant: ButtonVariant.secondary,
                     icon: Icons.message_outlined,
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Función de mensajería próximamente'),
-                          duration: Duration(seconds: 2),
+                      showDialog(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          title: const Row(
+                            children: [
+                              Icon(Icons.chat_bubble_outline_rounded,
+                                  color: AppColors.primaryBlue, size: 22),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text('Chat disponible tras aceptación',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                          content: const Text(
+                            'El chat con el abogado se habilita automáticamente cuando acepte tu solicitud.\n\nEnvía una solicitud usando "Solicitar Servicio" y recibirás una notificación cuando el abogado responda.',
+                            style: TextStyle(
+                                fontSize: 14,
+                                height: 1.55,
+                                color: AppColors.subtitleGrey),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Entendido',
+                                  style: TextStyle(
+                                      color: AppColors.primaryBlue,
+                                      fontWeight: FontWeight.w600)),
+                            ),
+                          ],
                         ),
                       );
                     },

@@ -1,7 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
+import 'package:juris_honoris/core/constants/api_config.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:juris_honoris/injection_container.dart';
 import 'bloc/chat_cubit.dart';
 
 class ClientLawyerChatPage extends StatefulWidget {
@@ -45,6 +49,53 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
     _controller.clear();
     context.read<ChatCubit>().sendMessage(widget.requestId, text);
     Future.delayed(const Duration(milliseconds: 200), _scrollToBottom);
+  }
+
+  Future<void> _sendImage() async {
+    final picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Tomar foto'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Elegir de galería'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    final img = await picker.pickImage(source: source, imageQuality: 80);
+    if (img == null || !mounted) return;
+    try {
+      final bytes = await img.readAsBytes();
+      final form = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes,
+            filename: img.name,
+            contentType: DioMediaType('image', img.name.endsWith('.png') ? 'png' : 'jpeg')),
+      });
+      final res = await sl<Dio>().post('${ApiConfig.upload}/temp', data: form);
+      final url = res.data['url'] as String;
+      if (mounted) {
+        context.read<ChatCubit>().sendMessage(widget.requestId, '📷 $url');
+        Future.delayed(const Duration(milliseconds: 200), _scrollToBottom);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al enviar la imagen')),
+        );
+      }
+    }
   }
 
   void _scrollToBottom() {
@@ -209,11 +260,7 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.attach_file, color: Color(0xFF757575)),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Adjuntar archivos — próximamente')),
-                    );
-                  },
+                  onPressed: _sendImage,
                 ),
                 Expanded(
                   child: TextField(
@@ -251,6 +298,39 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMessageContent(String content, bool isUser) {
+    // Detecta imágenes enviadas via adjunto (formato: "📷 https://...")
+    if (content.startsWith('📷 ') && content.length > 3) {
+      final url = content.substring(3).trim();
+      if (url.startsWith('https://')) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.network(
+            url,
+            width: 200,
+            fit: BoxFit.cover,
+            loadingBuilder: (_, child, progress) => progress == null
+                ? child
+                : const SizedBox(
+                    width: 200,
+                    height: 120,
+                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  ),
+            errorBuilder: (_, __, ___) => const Text('📷 Imagen no disponible',
+                style: TextStyle(fontSize: 13)),
+          ),
+        );
+      }
+    }
+    return Text(
+      content,
+      style: TextStyle(
+        color: isUser ? Colors.white : const Color(0xFF212121),
+        fontSize: 15,
       ),
     );
   }
@@ -298,13 +378,7 @@ class _ClientLawyerChatPageState extends State<ClientLawyerChatPage> {
                   ),
                 ),
               ),
-            Text(
-              msg.content,
-              style: TextStyle(
-                color: isUser ? Colors.white : const Color(0xFF212121),
-                fontSize: 15,
-              ),
-            ),
+            _buildMessageContent(msg.content, isUser),
             const SizedBox(height: 4),
             Text(
               timeStr,
