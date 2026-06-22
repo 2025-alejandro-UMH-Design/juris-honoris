@@ -12,6 +12,7 @@ import '../../../../core/constants/api_config.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../injection_container.dart';
+import '../../../home/presentation/pages/document_viewer_page.dart';
 
 // ─── Modelo documento ────────────────────────────────────────────────────────
 
@@ -225,12 +226,7 @@ class _LawyerCaseDossierPageState extends State<LawyerCaseDossierPage> {
         _ => 'image/jpeg',
       };
 
-  Future<void> _openFile(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
+
 
   Future<void> _shareWhatsApp() async {
     final docLines = _docs.isEmpty
@@ -481,6 +477,19 @@ class _LawyerCaseDossierPageState extends State<LawyerCaseDossierPage> {
                       ],
                     ),
                     child: ListTile(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DocumentViewerPage(
+                            doc: DocViewerArgs(
+                              id: doc.id,
+                              name: doc.name,
+                              url: doc.filePath,
+                              fileType: doc.fileType,
+                            ),
+                          ),
+                        ),
+                      ),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: AppSizes.md, vertical: AppSizes.xs),
                       leading: Container(
@@ -514,11 +523,8 @@ class _LawyerCaseDossierPageState extends State<LawyerCaseDossierPage> {
                           style: const TextStyle(
                               fontSize: 11,
                               color: AppColors.subtitleGrey)),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.open_in_new_rounded,
-                            size: 18, color: AppColors.primaryBlue),
-                        onPressed: () => _openFile(doc.filePath),
-                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded,
+                          size: 20, color: AppColors.greyMedium),
                     ),
                   );
                 }),

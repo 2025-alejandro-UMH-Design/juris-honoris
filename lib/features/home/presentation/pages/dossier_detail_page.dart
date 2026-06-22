@@ -14,6 +14,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/widgets/badge_widget.dart';
 import '../../../tasks/presentation/pages/tasks_page.dart';
+import 'document_viewer_page.dart';
 
 // ─── Modelo ──────────────────────────────────────────────────────────────────
 
@@ -337,12 +338,6 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
         _ => 'image/jpeg',
       };
 
-  Future<void> _openFile(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
 
   Future<void> _deleteDoc(String docId, String docName) async {
     final confirm = await showDialog<bool>(
@@ -701,7 +696,19 @@ class _DossierDetailPageState extends State<DossierDetailPage> {
               else ...[
                 ..._docs.map((doc) => _DocCard(
                       doc: doc,
-                      onOpen: () => _openFile(doc.filePath),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DocumentViewerPage(
+                            doc: DocViewerArgs(
+                              id: doc.id,
+                              name: doc.name,
+                              url: doc.filePath,
+                              fileType: doc.fileType,
+                            ),
+                          ),
+                        ),
+                      ),
                       onDelete: () => _deleteDoc(doc.id, doc.name),
                     )),
                 const SizedBox(height: AppSizes.md),
@@ -987,11 +994,11 @@ class _MetaRow extends StatelessWidget {
 
 class _DocCard extends StatelessWidget {
   final _Doc doc;
-  final VoidCallback onOpen;
+  final VoidCallback onTap;
   final VoidCallback onDelete;
 
   const _DocCard(
-      {required this.doc, required this.onOpen, required this.onDelete});
+      {required this.doc, required this.onTap, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -1016,6 +1023,7 @@ class _DocCard extends StatelessWidget {
       child: Column(
         children: [
           ListTile(
+            onTap: onTap,
             contentPadding: const EdgeInsets.symmetric(
                 horizontal: AppSizes.md, vertical: 6),
             leading: Container(
@@ -1075,18 +1083,18 @@ class _DocCard extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               onSelected: (v) {
-                if (v == 'open') onOpen();
+                if (v == 'view') onTap();
                 if (v == 'delete') onDelete();
               },
               itemBuilder: (_) => [
                 const PopupMenuItem(
-                  value: 'open',
+                  value: 'view',
                   child: Row(
                     children: [
-                      Icon(Icons.open_in_new_rounded,
+                      Icon(Icons.visibility_rounded,
                           size: 18, color: AppColors.primaryBlue),
                       SizedBox(width: 10),
-                      Text('Abrir archivo'),
+                      Text('Ver / descargar'),
                     ],
                   ),
                 ),
