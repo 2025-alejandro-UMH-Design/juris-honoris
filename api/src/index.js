@@ -137,6 +137,9 @@ app.listen(PORT, '0.0.0.0', async () => {
     await db.query(`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT
     `);
+    await db.query(`
+      ALTER TABLE cases ADD COLUMN IF NOT EXISTS completed_steps JSONB DEFAULT '[]'::jsonb
+    `);
     console.log(`✓ Juris Honoris API corriendo`);
     console.log(`  Local:    http://localhost:${PORT}/api/health`);
     console.log(`  Red:      http://192.168.1.94:${PORT}/api/health  ← usar en el celular`);

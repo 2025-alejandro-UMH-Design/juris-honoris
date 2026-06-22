@@ -58,21 +58,26 @@ router.post('/', requireAuth, async (req, res) => {
 
 // PUT /api/cases/:id
 router.put('/:id', requireAuth, async (req, res) => {
-  const { title, description, category, priority, status, due_date, notes } = req.body;
+  const { title, description, category, priority, status, due_date, notes, completed_steps } = req.body;
 
   const { rows } = await db.query(
     `update cases set
-       title       = coalesce($1, title),
-       description = coalesce($2, description),
-       category    = coalesce($3, category),
-       priority    = coalesce($4, priority),
-       status      = coalesce($5, status),
-       due_date    = coalesce($6, due_date),
-       notes       = coalesce($7, notes),
-       updated_at  = now()
-     where id = $8 and client_id = $9
+       title           = coalesce($1, title),
+       description     = coalesce($2, description),
+       category        = coalesce($3, category),
+       priority        = coalesce($4, priority),
+       status          = coalesce($5, status),
+       due_date        = coalesce($6, due_date),
+       notes           = coalesce($7, notes),
+       completed_steps = coalesce($8, completed_steps),
+       updated_at      = now()
+     where id = $9 and client_id = $10
      returning *`,
-    [title, description, category, priority, status, due_date, notes, req.params.id, req.user.id]
+    [
+      title, description, category, priority, status, due_date, notes,
+      completed_steps != null ? JSON.stringify(completed_steps) : null,
+      req.params.id, req.user.id,
+    ]
   );
   if (!rows[0]) return res.status(404).json({ error: 'Caso no encontrado' });
   res.json(rows[0]);
