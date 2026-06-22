@@ -25,6 +25,7 @@ class TaskDetailPage extends StatefulWidget {
 class _TaskDetailPageState extends State<TaskDetailPage> {
   List<bool> _checked = [];
   List<bool> _expanded = [];
+  List<RequiredDoc> _currentDocs = [];
   late TextEditingController _notesController;
 
   String get _effectiveSummary =>
@@ -61,7 +62,18 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   Future<void> _saveProgress({bool markComplete = false}) async {
     final cubit = context.read<CasesCubit>();
     final notes = _notesController.text.trim();
-    final saved = await cubit.saveNotes(widget.task.id, notes);
+
+    // Serializa los nombres de las actividades marcadas para persistirlas
+    final completedNames = _currentDocs.asMap().entries
+        .where((e) => _checked.length > e.key && _checked[e.key])
+        .map((e) => e.value.name)
+        .toList();
+
+    final saved = await cubit.saveNotes(
+      widget.task.id,
+      notes,
+      completedSteps: completedNames,
+    );
     if (!mounted) return;
 
     if (markComplete && saved) {
@@ -165,20 +177,25 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
       body: BlocConsumer<RecommendationsCubit, RecommendationsState>(
         listener: (context, state) {
           if (state is RecommendationsLoaded) {
+            final saved = widget.task.completedSteps;
             setState(() {
-              _checked = List<bool>.filled(state.docs.length, false);
+              _currentDocs = List<RequiredDoc>.from(state.docs);
+              _checked = state.docs
+                  .map((doc) => saved.contains(doc.name))
+                  .toList();
               _expanded = List<bool>.filled(state.docs.length, false);
             });
           }
         },
         builder: (context, state) {
-          final docs = state is RecommendationsLoaded ? state.docs : [];
+          final docs = state is RecommendationsLoaded ? state.docs : <RequiredDoc>[];
           final isLoading = state is RecommendationsLoading ||
               state is RecommendationsInitial;
 
           // Ajustar listas si aun no se sincronizaron
           if (_checked.length != docs.length) {
-            _checked = List<bool>.filled(docs.length, false);
+            final saved = widget.task.completedSteps;
+            _checked = docs.map((doc) => saved.contains(doc.name)).toList();
             _expanded = List<bool>.filled(docs.length, false);
           }
 

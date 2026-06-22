@@ -21,6 +21,7 @@ class TaskData {
   final String dueDate;
   bool checked;
   String notes;
+  final List<String> completedSteps;
 
   TaskData({
     required this.id,
@@ -32,6 +33,7 @@ class TaskData {
     required this.dueDate,
     this.checked = false,
     this.notes = '',
+    this.completedSteps = const [],
   });
 
   factory TaskData.fromJson(Map<String, dynamic> j) {
@@ -45,6 +47,10 @@ class TaskData {
       dueDate: j['due_date']?.toString() ?? j['dueDate']?.toString() ?? '',
       checked: j['status'] == 'completed',
       notes: j['notes']?.toString() ?? '',
+      completedSteps: (j['completed_steps'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
   }
 }

@@ -63,9 +63,16 @@ class CasesCubit extends Cubit<CasesState> {
     } catch (_) {}
   }
 
-  Future<bool> saveNotes(String caseId, String notes) async {
+  Future<bool> saveNotes(
+    String caseId,
+    String notes, {
+    List<String>? completedSteps,
+  }) async {
     try {
-      await _dio.put('${ApiConfig.cases}/$caseId', data: {'notes': notes});
+      await _dio.put('${ApiConfig.cases}/$caseId', data: {
+        'notes': notes,
+        if (completedSteps != null) 'completed_steps': completedSteps,
+      });
       if (state is CasesLoaded) {
         final updated = (state as CasesLoaded).cases.map((c) {
           if (c.id == caseId) c.notes = notes;
