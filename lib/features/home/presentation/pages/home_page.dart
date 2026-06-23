@@ -260,11 +260,45 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
+            // Accesos rápidos
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.pagePadding,
+                AppSizes.lg,
+                AppSizes.pagePadding,
+                0,
+              ),
+              child: Row(
+                children: [
+                  _QuickAction(
+                    icon: Icons.folder_open_rounded,
+                    label: 'Mis archivos',
+                    color: AppColors.primaryBlue,
+                    onTap: () => context.go('/dossier'),
+                  ),
+                  const SizedBox(width: AppSizes.sm),
+                  _QuickAction(
+                    icon: Icons.gavel_rounded,
+                    label: 'Abogados',
+                    color: const Color(0xFF7C3AED),
+                    onTap: () => context.push('/lawyers'),
+                  ),
+                  const SizedBox(width: AppSizes.sm),
+                  _QuickAction(
+                    icon: Icons.task_alt_rounded,
+                    label: 'Mis casos',
+                    color: AppColors.successGreen,
+                    onTap: () => context.go('/tasks'),
+                  ),
+                ],
+              ),
+            ),
+
             // Mi Plan
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSizes.pagePadding,
-                AppSizes.xl,
+                AppSizes.lg,
                 AppSizes.pagePadding,
                 0,
               ),
@@ -1143,5 +1177,69 @@ class _NotificationsPanelSheetState extends State<_NotificationsPanelSheet> {
     if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
     if (diff.inDays == 1) return 'Ayer';
     return 'Hace ${diff.inDays} días';
+  }
+}
+
+// ─── Botón de acceso rápido ──────────────────────────────────────────────────
+
+class _QuickAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+            border: Border.all(color: AppColors.borderColor),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x1A000000),
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 20, color: color),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.greyDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
