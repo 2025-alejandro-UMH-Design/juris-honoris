@@ -107,15 +107,15 @@ router.get('/:docId/download', requireAuth, async (req, res) => {
 // DELETE /api/cases/:caseId/documents/:docId
 router.delete('/:docId', requireAuth, async (req, res) => {
   const { rows } = await db.query(
-    `select cd.file_path, c.client_id
+    `select cd.file_path, c.client_id, c.lawyer_id
      from case_documents cd
      join cases c on c.id = cd.case_id
      where cd.id = $1 and cd.case_id = $2`,
     [req.params.docId, req.params.caseId]
   );
   if (!rows[0]) return res.status(404).json({ error: 'Documento no encontrado' });
-  if (rows[0].client_id !== req.user.id) {
-    return res.status(403).json({ error: 'Solo el cliente puede eliminar documentos' });
+  if (req.user.id !== rows[0].client_id && req.user.id !== rows[0].lawyer_id) {
+    return res.status(403).json({ error: 'Sin acceso a este documento' });
   }
 
   await db.query('delete from case_documents where id = $1', [req.params.docId]);
