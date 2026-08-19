@@ -10,7 +10,7 @@ import 'package:juris_honoris/features/ai_chat/presentation/bloc/chat_ia_cubit.d
 import 'package:juris_honoris/features/ai_chat/presentation/widgets/action_buttons_bar.dart';
 import 'package:juris_honoris/features/ai_chat/presentation/widgets/ai_message_bubble.dart';
 import 'package:juris_honoris/features/auth/presentation/bloc/auth_cubit.dart';
-import 'package:juris_honoris/shared/widgets/bottom_nav_bar.dart';
+import 'package:juris_honoris/shared/web/app_nav_scaffold.dart';
 
 import 'package:juris_honoris/injection_container.dart';
 import 'package:juris_honoris/features/tasks/presentation/bloc/cases_cubit.dart';
@@ -120,13 +120,11 @@ class _ChatIAPageState extends State<ChatIAPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppNavScaffold(
+      currentIndex: 1,
+      onTabChanged: _onNavChanged,
       backgroundColor: AppColors.greyVeryLight,
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: 1,
-        onTabChanged: _onNavChanged,
-      ),
-      appBar: AppBar(
+      mobileAppBar: AppBar(
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: AppColors.white,
         elevation: 0,

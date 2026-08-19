@@ -156,19 +156,26 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
       ),
     );
 
+    // En web, los títulos usan una serif institucional; en móvil se
+    // mantiene Roboto exactamente como antes. El cuerpo de texto se
+    // mantiene sans-serif en ambos por legibilidad.
+    final headlineFont = kIsWeb ? GoogleFonts.sourceSerif4 : GoogleFonts.roboto;
+
     return base.copyWith(
       textTheme: GoogleFonts.robotoTextTheme(base.textTheme).copyWith(
-        headlineLarge: GoogleFonts.roboto(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
+        headlineLarge: headlineFont(
+            fontSize: 30,
+            fontWeight: FontWeight.w600,
+            letterSpacing: kIsWeb ? -0.3 : 0,
             color: AppColors.greyDark),
-        headlineMedium: GoogleFonts.roboto(
+        headlineMedium: headlineFont(
             fontSize: 24,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
+            letterSpacing: kIsWeb ? -0.2 : 0,
             color: AppColors.greyDark),
-        headlineSmall: GoogleFonts.roboto(
+        headlineSmall: headlineFont(
             fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             color: AppColors.greyDark),
         bodyLarge: GoogleFonts.roboto(
             fontSize: 16,
@@ -187,15 +194,15 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
   }
 }
 
-/// En web y ventanas anchas, centra la app en una tarjeta de ancho fijo
-/// (misma UI que móvil) sobre un fondo neutro, en vez de estirarla a todo
+/// En web y ventanas anchas, centra el contenido en un panel institucional
+/// de ancho legible sobre un fondo de "papel", en vez de estirarlo a todo
 /// el ancho de la pantalla. En móvil/tablet no tiene efecto.
 class _WebFrame extends StatelessWidget {
   final Widget? child;
 
   const _WebFrame({required this.child});
 
-  static const double _maxWidth = 640;
+  static const double _maxWidth = 1100;
 
   @override
   Widget build(BuildContext context) {
@@ -214,11 +221,14 @@ class _WebFrame extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: AppColors.white,
+                  border: Border.symmetric(
+                    vertical: BorderSide(color: AppColors.borderColor),
+                  ),
                   boxShadow: const [
                     BoxShadow(
                         color: Colors.black12,
-                        blurRadius: 32,
-                        spreadRadius: -8),
+                        blurRadius: 40,
+                        spreadRadius: -12),
                   ],
                 ),
                 child: content,

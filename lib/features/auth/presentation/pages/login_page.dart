@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:juris_honoris/core/constants/app_colors.dart';
 import 'package:juris_honoris/core/constants/app_sizes.dart';
@@ -70,27 +72,61 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     // ── Header ─────────────────────────────────────────
                     const SizedBox(height: AppSizes.xl),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.balance,
-                          color: AppColors.primaryBlue,
-                          size: 32,
+                    if (kIsWeb) ...[
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: AppColors.webNavyDeep,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: AppColors.webAccentBrass, width: 1.5),
                         ),
-                        const SizedBox(width: AppSizes.sm),
-                        Text(
-                          'Juris Honoris',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(
-                                color: AppColors.primaryBlue,
-                                fontWeight: FontWeight.bold,
-                              ),
+                        child: const Icon(Icons.balance_rounded,
+                            color: AppColors.webAccentBrass, size: 26),
+                      ),
+                      const SizedBox(height: AppSizes.md),
+                      Text(
+                        'JURIS HONORIS',
+                        style: GoogleFonts.sourceSerif4(
+                          color: AppColors.greyDark,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'PORTAL DE ACCESO',
+                        style: TextStyle(
+                          color: AppColors.webAccentBrass,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 3,
+                        ),
+                      ),
+                    ] else
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.balance,
+                            color: AppColors.primaryBlue,
+                            size: 32,
+                          ),
+                          const SizedBox(width: AppSizes.sm),
+                          Text(
+                            'Juris Honoris',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  color: AppColors.primaryBlue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      ),
                     const SizedBox(height: AppSizes.xl3),
 
                     // ── Titles ─────────────────────────────────────────

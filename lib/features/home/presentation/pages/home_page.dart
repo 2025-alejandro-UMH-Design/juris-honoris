@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../shared/widgets/badge_widget.dart';
-import '../../../../shared/widgets/bottom_nav_bar.dart';
+import '../../../../shared/web/app_nav_scaffold.dart';
 import '../widgets/lawyer_card.dart';
 import '../../../tasks/presentation/pages/tasks_page.dart';
 import 'package:dio/dio.dart';
@@ -105,9 +105,10 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ],
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundColor,
-        appBar: AppBar(
+      child: AppNavScaffold(
+        currentIndex: _currentTab,
+        onTabChanged: _onTabChanged,
+        mobileAppBar: AppBar(
           backgroundColor: AppColors.white,
           elevation: 0,
           scrolledUnderElevation: 0,
@@ -491,10 +492,6 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: AppSizes.lg),
           ],
-        ),
-        bottomNavigationBar: BottomNavBar(
-          currentIndex: _currentTab,
-          onTabChanged: _onTabChanged,
         ),
       ),
     );
