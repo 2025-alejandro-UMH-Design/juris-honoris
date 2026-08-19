@@ -43,6 +43,8 @@ const allowedOrigins = [
   'https://jurishonorisadmin.vercel.app',
   'https://jurishonorisadmin-3yrvweaib-alejandro-solorzano-s-projects.vercel.app',
   /^https:\/\/jurishonorisadmin-.*\.vercel\.app$/,
+  'https://juris-honoris-portal.vercel.app',
+  /^https:\/\/juris-honoris-portal-.*\.vercel\.app$/,
   'http://localhost:3001',
   'http://localhost:3000',
 ];
