@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const db     = require('../db');
-const { requireAuth, requireRole } = require('../middleware/auth');
-const guard  = [requireAuth, requireRole('admin')];
+const { requireAuth, requireRole, blockWriteIfRole } = require('../middleware/auth');
+const guard  = [requireAuth, requireRole('admin', 'support_viewer'), blockWriteIfRole('support_viewer')];
 
 const PROVIDERS = {
   groq:      { baseUrl: 'https://api.groq.com/openai/v1/chat/completions',         format: 'openai' },

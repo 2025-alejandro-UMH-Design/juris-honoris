@@ -1,10 +1,10 @@
 const router  = require('express').Router();
 const bcrypt   = require('bcryptjs');
 const db       = require('../db');
-const { requireAuth, requireRole } = require('../middleware/auth');
+const { requireAuth, requireRole, blockWriteIfRole } = require('../middleware/auth');
 const { uploadLawyer } = require('../middleware/upload');
 
-const guard = [requireAuth, requireRole('admin')];
+const guard = [requireAuth, requireRole('admin', 'support_viewer'), blockWriteIfRole('support_viewer')];
 
 // GET /api/admin/stats  — dashboard
 router.get('/stats', ...guard, async (req, res) => {
@@ -57,7 +57,7 @@ router.get('/users/:id', ...guard, async (req, res) => {
 // PUT /api/admin/users/:id  — editar datos del usuario
 router.put('/users/:id', ...guard, async (req, res) => {
   const { full_name, phone, dni, role } = req.body;
-  const validRoles = ['client', 'lawyer', 'admin'];
+  const validRoles = ['client', 'lawyer', 'admin', 'support_viewer'];
   if (role && !validRoles.includes(role)) {
     return res.status(400).json({ error: 'Rol inválido' });
   }

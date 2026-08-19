@@ -23,4 +23,14 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { requireAuth, requireRole };
+// Bloquea cualquier método distinto de GET para el rol indicado (acceso de solo lectura)
+function blockWriteIfRole(role) {
+  return (req, res, next) => {
+    if (req.user.role === role && req.method !== 'GET') {
+      return res.status(403).json({ error: 'Tu cuenta es de solo lectura' });
+    }
+    next();
+  };
+}
+
+module.exports = { requireAuth, requireRole, blockWriteIfRole };
