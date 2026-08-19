@@ -4,7 +4,7 @@ import 'package:juris_honoris/features/ai_chat/presentation/bloc/recommendations
 import 'package:juris_honoris/injection_container.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../shared/widgets/bottom_nav_bar.dart';
+import '../../../../shared/web/app_nav_scaffold.dart';
 import '../../../../shared/widgets/badge_widget.dart';
 import '../bloc/cases_cubit.dart';
 import 'task_detail_page.dart';
@@ -152,9 +152,10 @@ class _TasksPageState extends State<TasksPage> {
       listener: (context, state) {
         if (state is CasesLoaded) setState(() => _tasks = state.cases);
       },
-      child: Scaffold(
-      backgroundColor: AppColors.backgroundColor,
-      appBar: AppBar(
+      child: AppNavScaffold(
+      currentIndex: widget.currentNavIndex,
+      onTabChanged: widget.onNavChanged,
+      mobileAppBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -235,10 +236,6 @@ class _TasksPageState extends State<TasksPage> {
           'Nueva tarea',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: widget.currentNavIndex,
-        onTabChanged: widget.onNavChanged,
       ),
     ),
     );

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../shared/widgets/bottom_nav_bar.dart';
+import '../../../../shared/web/app_nav_scaffold.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/domain/entities/user_entity.dart';
 import 'upgrade_page.dart';
@@ -34,9 +34,10 @@ class ProfilePage extends StatelessWidget {
         ? '${parts[0][0]}${parts[1][0]}'.toUpperCase()
         : parts[0][0].toUpperCase();
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
-      appBar: AppBar(
+    return AppNavScaffold(
+      currentIndex: currentNavIndex,
+      onTabChanged: onNavChanged,
+      mobileAppBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -353,10 +354,6 @@ class ProfilePage extends StatelessWidget {
             const SizedBox(height: AppSizes.xl),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: currentNavIndex,
-        onTabChanged: onNavChanged,
       ),
     );
   }

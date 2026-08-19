@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../shared/widgets/bottom_nav_bar.dart';
+import '../../../../shared/web/app_nav_scaffold.dart';
 import '../../../../shared/widgets/badge_widget.dart';
 import '../../../tasks/presentation/pages/tasks_page.dart';
 import 'dossier_detail_page.dart';
@@ -54,9 +54,10 @@ class _DossierPageState extends State<DossierPage> {
       listener: (_, state) {
         if (state is CasesLoaded) setState(() => _items = state.cases);
       },
-      child: Scaffold(
-      backgroundColor: AppColors.backgroundColor,
-      appBar: AppBar(
+      child: AppNavScaffold(
+      currentIndex: widget.currentNavIndex,
+      onTabChanged: widget.onNavChanged,
+      mobileAppBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -115,10 +116,6 @@ class _DossierPageState extends State<DossierPage> {
           'Nuevo hito',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: widget.currentNavIndex,
-        onTabChanged: widget.onNavChanged,
       ),
     ),
     );
