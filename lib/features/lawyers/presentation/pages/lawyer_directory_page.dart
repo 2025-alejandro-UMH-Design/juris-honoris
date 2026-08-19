@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -227,23 +228,57 @@ class _LawyerDirectoryPageState extends State<LawyerDirectoryPage> {
           Expanded(
             child: filtered.isEmpty
                 ? const _EmptyResults()
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSizes.pagePadding,
-                      AppSizes.sm,
-                      AppSizes.pagePadding,
-                      AppSizes.xl2,
-                    ),
-                    itemCount: filtered.length,
-                    itemBuilder: (_, i) {
-                      final lawyer = filtered[i];
-                      return LawyerCard(
-                        lawyer: lawyer,
-                        onVerPerfil: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                LawyerProfilePage(lawyer: lawyer),
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      // En web y pantallas anchas, grilla de 2 columnas en
+                      // vez de una sola lista angosta flotando en el ancho.
+                      final columns =
+                          kIsWeb && constraints.maxWidth >= 760 ? 2 : 1;
+
+                      if (columns == 1) {
+                        return ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSizes.pagePadding,
+                            AppSizes.sm,
+                            AppSizes.pagePadding,
+                            AppSizes.xl2,
+                          ),
+                          itemCount: filtered.length,
+                          itemBuilder: (_, i) => LawyerCard(
+                            lawyer: filtered[i],
+                            onVerPerfil: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    LawyerProfilePage(lawyer: filtered[i]),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      return GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSizes.pagePadding,
+                          AppSizes.sm,
+                          AppSizes.pagePadding,
+                          AppSizes.xl2,
+                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisExtent: 132,
+                          crossAxisSpacing: AppSizes.cardGap,
+                        ),
+                        itemCount: filtered.length,
+                        itemBuilder: (_, i) => LawyerCard(
+                          lawyer: filtered[i],
+                          onVerPerfil: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  LawyerProfilePage(lawyer: filtered[i]),
+                            ),
                           ),
                         ),
                       );
