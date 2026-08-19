@@ -15,7 +15,7 @@ class ApiConfig {
   //   flutter run --dart-define=API_BASE_URL=http://192.168.1.94:3000/api
   static const baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://backend-api-production-7551.up.railway.app/api',
+    defaultValue: 'https://backend-api-v2-production-7a76.up.railway.app/api',
   );
 
   // Endpoints
