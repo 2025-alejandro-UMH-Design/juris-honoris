@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:juris_honoris/core/constants/api_config.dart';
 
 class FcmService {
   static Future<void> registerToken(Dio dio) async {
+    if (kIsWeb) return; // Firebase aún no está configurado para web
     try {
       final messaging = FirebaseMessaging.instance;
       final settings = await messaging.requestPermission(

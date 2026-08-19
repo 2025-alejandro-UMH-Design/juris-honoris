@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -58,7 +59,8 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
           theme: _buildTheme(),
           routerConfig: _router,
           locale: DevicePreview.locale(context),
-          builder: DevicePreview.appBuilder,
+          builder: (context, child) =>
+              _WebFrame(child: DevicePreview.appBuilder(context, child)),
         ),
       ),
     );
@@ -181,6 +183,50 @@ class _JurisHonorisAppState extends State<JurisHonorisApp> {
             fontWeight: FontWeight.bold,
             color: AppColors.subtitleGrey),
       ),
+    );
+  }
+}
+
+/// En web y ventanas anchas, centra la app en una tarjeta de ancho fijo
+/// (misma UI que móvil) sobre un fondo neutro, en vez de estirarla a todo
+/// el ancho de la pantalla. En móvil/tablet no tiene efecto.
+class _WebFrame extends StatelessWidget {
+  final Widget? child;
+
+  const _WebFrame({required this.child});
+
+  static const double _maxWidth = 640;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = child ?? const SizedBox.shrink();
+    if (!kIsWeb) return content;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth <= _maxWidth) return content;
+        return ColoredBox(
+          color: AppColors.backgroundColor,
+          child: Center(
+            child: SizedBox(
+              width: _maxWidth,
+              height: constraints.maxHeight,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 32,
+                        spreadRadius: -8),
+                  ],
+                ),
+                child: content,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -52,6 +53,10 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
 
   // ── Descargar archivo y compartir con sistema ─────────────────────────────
   Future<void> _downloadAndShare() async {
+    if (kIsWeb) {
+      await _openExternal();
+      return;
+    }
     setState(() => _downloading = true);
     try {
       final dir = await getTemporaryDirectory();
@@ -83,6 +88,10 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
 
   // ── Guardar en descargas del dispositivo ─────────────────────────────────
   Future<void> _saveToDownloads() async {
+    if (kIsWeb) {
+      await _openExternal();
+      return;
+    }
     setState(() => _downloading = true);
     try {
       // B4: cadena de fallbacks para máxima compatibilidad Android 10+
