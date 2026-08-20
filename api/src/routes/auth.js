@@ -61,27 +61,49 @@ router.post('/register', async (req, res) => {
   res.status(201).json({ token, user: sanitize(rows[0]) });
 });
 
-// POST /api/auth/google  — login/registro con Google ID token
+// POST /api/auth/google  — login/registro con Google (id_token o access_token)
 router.post('/google', async (req, res) => {
-  const { id_token } = req.body;
-  if (!id_token) return res.status(400).json({ error: 'id_token requerido' });
+  const { id_token, access_token } = req.body;
+  if (!id_token && !access_token) {
+    return res.status(400).json({ error: 'id_token o access_token requerido' });
+  }
 
   try {
-    const r = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${id_token}`);
-    const info = await r.json();
-
-    if (!r.ok || info.error) {
-      return res.status(401).json({ error: 'Token de Google inválido' });
-    }
-
     const webClientId = process.env.GOOGLE_WEB_CLIENT_ID;
-    if (!webClientId || info.aud !== webClientId) {
-      return res.status(401).json({ error: 'Token no autorizado para esta aplicación' });
-    }
+    let email, name, googleId;
 
-    const email = info.email?.toLowerCase();
-    const name  = info.name || (email ? email.split('@')[0] : 'Usuario');
-    const googleId = info.sub;
+    if (id_token) {
+      // Móvil (y algunos navegadores): Google entrega un id_token verificable.
+      const r = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${id_token}`);
+      const info = await r.json();
+      if (!r.ok || info.error) {
+        return res.status(401).json({ error: 'Token de Google inválido' });
+      }
+      if (!webClientId || info.aud !== webClientId) {
+        return res.status(401).json({ error: 'Token no autorizado para esta aplicación' });
+      }
+      email = info.email?.toLowerCase();
+      name = info.name || (email ? email.split('@')[0] : 'Usuario');
+      googleId = info.sub;
+    } else {
+      // Web: Google Identity Services casi nunca entrega id_token — se
+      // valida el access_token (audiencia) y se pide el perfil aparte.
+      const tr = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${access_token}`);
+      const tinfo = await tr.json();
+      if (!tr.ok || tinfo.error || !webClientId || tinfo.aud !== webClientId) {
+        return res.status(401).json({ error: 'Token no autorizado para esta aplicación' });
+      }
+      const ur = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      const uinfo = await ur.json();
+      if (!ur.ok || !uinfo.email) {
+        return res.status(401).json({ error: 'No se pudo obtener el perfil de Google' });
+      }
+      email = uinfo.email?.toLowerCase();
+      name = uinfo.name || email.split('@')[0];
+      googleId = uinfo.sub;
+    }
 
     if (!email) return res.status(400).json({ error: 'Email no disponible en la cuenta Google' });
 

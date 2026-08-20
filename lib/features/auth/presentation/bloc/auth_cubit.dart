@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -120,14 +121,22 @@ class AuthCubit extends Cubit<AuthState> {
       }
       final auth = await account.authentication;
       final idToken = auth.idToken;
-      if (idToken == null) {
+      final accessToken = auth.accessToken;
+
+      // En web, Google Identity Services casi nunca entrega id_token —
+      // se usa el access_token como respaldo (el backend lo valida igual).
+      final useAccessToken = idToken == null && kIsWeb && accessToken != null;
+
+      if (idToken == null && !useAccessToken) {
         emit(const AuthError('Google no devolvió un token válido. Verifica la configuración OAuth.'));
         return;
       }
 
       final res = await _dio.post(
         '${ApiConfig.auth}/google',
-        data: {'id_token': idToken},
+        data: useAccessToken
+            ? {'access_token': accessToken}
+            : {'id_token': idToken},
       );
       final token = res.data['token'] as String;
       await _tokenStorage.save(token);
